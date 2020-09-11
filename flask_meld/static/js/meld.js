@@ -55,6 +55,7 @@ var Meld = (function () {
                         var attributeName = attribute.name;
                         var modifiers = attributeName.replace("meld:model.", "").split(".");
                         var attributeModifiers = {};
+                        print(attributeModifiers)
 
                         modifiers.forEach(modifier => {
                             if (modifier != "meld:model") {
@@ -64,6 +65,7 @@ var Meld = (function () {
                         })
                         var modelEventType = attributeModifiers.lazy ? "blur" : "input";
                         var debounceTime = attributeModifiers.debounce ? parseInt(attributeModifiers.debounce) : -1;
+                        print(debounceTime)
 
                         el.addEventListener(modelEventType, event => {
                             var modelName = el.getAttribute(attributeName);
@@ -371,35 +373,37 @@ var Meld = (function () {
     but there is a fixed wait time before each execution.
     From https://medium.com/ghostcoder/debounce-vs-throttle-vs-queue-execution-bcde259768.
     */
-    var funcQueue = [];
+    const funcQueue = [];
     function queue(func, waitTime) {
-        var isWaiting;
+      let isWaiting;
 
-        var executeFunc = function (params) {
-            isWaiting = true;
-            func(params);
-            setTimeout(play, waitTime);
-        };
+      const play = () => {
+        let params;
+        isWaiting = false;
 
-        var play = function () {
-            isWaiting = false;
-            if (funcQueue.length) {
-                var params = funcQueue.shift();
-                executeFunc(params);
-            }
-        };
-
-        return function (params) {
-            if (isWaiting) {
-                funcQueue.push(params);
-            } else {
-                executeFunc(params);
-            }
+        if (funcQueue.length) {
+          params = funcQueue.shift();
+          executeFunc(params);
         }
-    };
+      };
+
+      const executeFunc = (params) => {
+        isWaiting = true;
+        func(params);
+        setTimeout(play, waitTime);
+      };
+
+      return (params) => {
+        if (isWaiting) {
+          funcQueue.push(params);
+        } else {
+          executeFunc(params);
+        }
+      };
+    }
 
     /*
-    Stupid method because context switches are hard.
+    Allow python print
     */
     function print(msg) {
         var args = [].slice.apply(arguments).slice(1);
