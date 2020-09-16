@@ -11,11 +11,18 @@ __version__ = '0.0.1'
 
 
 class Meld(object):
+
     def __init__(self, app=None):
         self.app = app
 
         if app is not None:
             self.init_app(app)
+
+    def send_static_file(self, filename):
+        _static_dir = os.path.realpath(
+            os.path.join(os.path.dirname(__file__), 'static/js'))
+        """Send a static file from the flask-meld static directory."""
+        return send_from_directory(_static_dir, filename)
 
     def init_app(self, app):
         app.jinja_env.add_extension(MeldExtension)
@@ -40,11 +47,12 @@ class Meld(object):
 
             if action_queue:
                 for action in action_queue:
-                    if 'sync' in action["type"]:
-                        payload = action["payload"]
+                    payload = action["payload"]
+                    if 'syncInput' in action["type"]:
                         print(payload)
                         if hasattr(component, payload['name']):
-                            setattr(component, payload['name'], payload['value'])
+                            setattr(component, payload['name'],
+                                    payload['value'])
 
             rendered_component = component.render(component_name)
             print(rendered_component)
@@ -55,12 +63,6 @@ class Meld(object):
             }
 
             return jsonify(res)
-
-    def send_static_file(self, filename):
-        _static_dir = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), 'static/js'))
-        """Send a static file from the flask-meld static directory."""
-        return send_from_directory(_static_dir, filename)
 
 
 class MeldScriptsExtension(Extension):

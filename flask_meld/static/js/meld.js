@@ -222,7 +222,7 @@ var Meld = (function () {
         for (var i = 0; i < modelNamePieces.length; i++) {
             var modelNamePiece = modelNamePieces[i];
 
-            if (_data.hasOwnProperty(modelNamePiece)) {
+            if (_data && _data.hasOwnProperty(modelNamePiece)) {
                 if (i == modelNamePieces.length - 1) {
                     if (el.type.toLowerCase() === "radio") {
                         // Handle radio buttons
@@ -235,9 +235,10 @@ var Meld = (function () {
                     } else {
                         el.value = _data[modelNamePiece];
                     }
-                } else {
-                    _data = _data[modelNamePiece];
                 }
+            else {
+                  _data = _data[modelNamePiece];
+              }
             }
         }
     }
