@@ -38,6 +38,7 @@ class Component:
             id = uuid.uuid4()
 
         self.id = id
+        self._data = {}
 
     def __repr__(self):
         return f"<meld.Component {self.__class__.__name__}-vars{self.__attributes__()})>"
@@ -83,10 +84,18 @@ class Component:
             "methods": self.__methods__(),
         }
 
-    def render(self, component_name):
-        return self.view(component_name)
+    @property
+    def _item_data(self):
+        return self._data
 
-    def view(self, component_name):
+    @_item_data.setter
+    def _item_data(self, data):
+        self._data = data
+
+    def render(self, component_name):
+        return self.view(component_name, self._data)
+
+    def view(self, component_name, data):
         context = self.__context__()
         context_variables = {}
         context_variables.update(context["attributes"])

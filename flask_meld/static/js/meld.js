@@ -92,40 +92,43 @@ var Meld = (function () {
 
                         el.addEventListener(eventType, event => {
                             var action = { type: "callMethod", payload: { name: methodName, params: []} };
-                          print(data)
+                            print(componentName)
+                            print(methodName)
                             var id = el.id;
                             var key = el.getAttribute("meld:key");
 
-                            sendMessage(componentName, componentRoot, meldId, action, 0, function () {
-                                print(modelEls[0])
-                                setModelValues(modelEls, {id: id, key: key});
-                            });
+                          meld.call(componentName, methodName, args);
                         });
                     }
                 }
             };
         });
 
-        setModelValues(modelEls);
     };
 
     /*
     Sets the data on the meld object.
     */
     meld.setData = function (_data) {
+        print("this is the meld.setData function");
+        print(_data);
+        print(data);
         data = _data;
     }
 
     /*
     Call an action on the specified component.
     */
-    meld.call = function (componentName, methodName) {
-        var componentRoot = $('[meld\\:name="' + componentName + '"]');
+    meld.call = function (componentName, methodName,args) {
+        var meldId = args.id;
+        var componentName = args.name;
+        var componentRoot = $('[meld\\:id="' + meldId + '"]');
 
         if (!componentRoot) {
             Error("No component found for: ", componentName);
         }
 
+        print(componentRoot)
         var meldId = componentRoot.getAttribute('meld:id');
 
         if (!meldId) {
@@ -142,6 +145,7 @@ var Meld = (function () {
             }
 
             if (getModelName(el)) {
+                print(el);
                 modelEls.push(el);
             }
         });
@@ -299,8 +303,9 @@ var Meld = (function () {
                         return
                     }
 
-                    meld.setData(responseJson.data);
+                    //meld.setData(responseJson.data);
                     data = responseJson.data || {};
+
                     var dom = responseJson.dom;
 
                     var morphdomOptions = {

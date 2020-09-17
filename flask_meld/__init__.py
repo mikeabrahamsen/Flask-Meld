@@ -77,9 +77,15 @@ class Meld(object):
                         method_name = call_method_name
                         data = body['data']
 
-                        for arg in data:
-                            print("ATTR:", component.__attributes__())
+                        for arg in component.__attributes__():
+                            try:
+                                value = data.get(arg)
+                                setattr(component, arg, value)
+                                print("updating component: ", arg,
+                                      getattr(component, arg))
 
+                            except ValueError:
+                                pass
 
                         method_name = call_method_name
                         params = []
@@ -122,7 +128,9 @@ class Meld(object):
             res = {
                 "id": meld_id,
                 "dom": rendered_component,
+                "data": component.__attributes__()
             }
+            print(res)
 
             return jsonify(res)
 
