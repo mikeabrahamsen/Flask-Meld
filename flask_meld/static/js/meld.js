@@ -31,6 +31,14 @@ var Meld = (function () {
         var meldId = args.id;
         var componentName = args.name;
         var componentRoot = $('[meld\\:id="' + meldId + '"]');
+        var rc = componentRoot.getAttribute('meld:data');
+        var tmp = rc.replace(/[\"{}]/g,"").split(":");
+
+        data[tmp[0]] = tmp[1];
+        _data = data;
+
+
+
 
         if (!componentRoot) {
             Error("No id found");
@@ -55,7 +63,6 @@ var Meld = (function () {
                         var attributeName = attribute.name;
                         var modifiers = attributeName.replace("meld:model.", "").split(".");
                         var attributeModifiers = {};
-                        print(attributeModifiers)
 
                         modifiers.forEach(modifier => {
                             if (modifier != "meld:model") {
@@ -65,7 +72,6 @@ var Meld = (function () {
                         })
                         var modelEventType = attributeModifiers.lazy ? "blur" : "input";
                         var debounceTime = attributeModifiers.debounce ? parseInt(attributeModifiers.debounce) : -1;
-                        print(debounceTime)
 
                         el.addEventListener(modelEventType, event => {
                             var modelName = el.getAttribute(attributeName);
@@ -81,12 +87,18 @@ var Meld = (function () {
                     } else {
                         var eventType = attribute.name.replace("meld:", "");
                         var methodName = attribute.value;
+                        var value = data
+
 
                         el.addEventListener(eventType, event => {
-                            var action = { type: "callMethod", payload: { name: methodName, params: [] } };
+                            var action = { type: "callMethod", payload: { name: methodName, params: []} };
+                          print(data)
+                            var id = el.id;
+                            var key = el.getAttribute("meld:key");
 
                             sendMessage(componentName, componentRoot, meldId, action, 0, function () {
-                                setModelValues(modelEls);
+                                print(modelEls[0])
+                                setModelValues(modelEls, {id: id, key: key});
                             });
                         });
                     }
@@ -222,7 +234,7 @@ var Meld = (function () {
         for (var i = 0; i < modelNamePieces.length; i++) {
             var modelNamePiece = modelNamePieces[i];
 
-            if (_data && _data.hasOwnProperty(modelNamePiece)) {
+            if (_data.hasOwnProperty(modelNamePiece)) {
                 if (i == modelNamePieces.length - 1) {
                     if (el.type.toLowerCase() === "radio") {
                         // Handle radio buttons
@@ -288,6 +300,7 @@ var Meld = (function () {
                     }
 
                     meld.setData(responseJson.data);
+                    data = responseJson.data || {};
                     var dom = responseJson.dom;
 
                     var morphdomOptions = {

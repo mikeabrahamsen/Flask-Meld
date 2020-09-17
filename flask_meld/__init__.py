@@ -9,6 +9,23 @@ from .component import get_component_class  # , Component
 
 __version__ = '0.0.1'
 
+def _handle_arg(arg):
+    """
+    Clean up arguments. Mostly used to handle strings.
+    Returns:
+        Cleaned up argument.
+    """
+    if (arg.startswith("'") and arg.endswith("'")) or (
+        arg.startswith('"') and arg.endswith('"')
+    ):
+        return arg[1:-1]
+
+def get_args(args):
+    found_args = []
+    arg = ""
+    dict_count = 0
+    list_count = 0
+    tuple_count = 0
 
 class Meld(object):
 
@@ -36,12 +53,15 @@ class Meld(object):
         app.add_url_rule('/_meld/static/js/<path:filename>', None,
                          self.send_static_file)
 
+
+
         @app.route("/message")
         @app.route("/message/<string:component_name>", methods=['GET', 'POST'])
         def message(component_name):
             body = request.get_json()
             meld_id = body.get("id")
             action_queue = body.get("actionQueue")
+
             Component = get_component_class(component_name)
             component = Component(meld_id)
 
@@ -49,13 +69,55 @@ class Meld(object):
                 for action in action_queue:
                     payload = action["payload"]
                     if 'syncInput' in action["type"]:
-                        print(payload)
                         if hasattr(component, payload['name']):
-                            setattr(component, payload['name'],
-                                    payload['value'])
+                            setattr(component, payload['name'], payload['value'])
+
+                    elif "callMethod" in action["type"]:
+                        call_method_name = payload.get("name", "")
+                        method_name = call_method_name
+                        data = body['data']
+
+                        for arg in data:
+                            print("ATTR:", component.__attributes__())
+
+
+                        method_name = call_method_name
+                        params = []
+
+                        if "(" in call_method_name and call_method_name.endswith(")"):
+                            param_idx = call_method_name.index("(")
+                            params_str = call_method_name[param_idx:]
+
+                            # Remove the arguments from the method name
+                            method_name = call_method_name.replace(params_str, "")
+
+                            # Remove parenthesis
+                            params_str = params_str[1:-1]
+
+                            if params_str == "":
+                                return (method_name, params)
+
+                            # Split up mutiple args
+                            # params = params_str.split(",")
+
+                            # for idx, arg in enumerate(params):
+                            #     params[idx] = handle_arg(arg)
+
+                            params = get_args(params_str)
+
+                            # params = handle_arg(params_str)
+
+                            # TODO: Handle kwargs
+
+                        if method_name is not None and hasattr(component, method_name):
+                            func = getattr(component, method_name)
+
+                            if params:
+                                func(*params)
+                            else:
+                                func()
 
             rendered_component = component.render(component_name)
-            print(rendered_component)
 
             res = {
                 "id": meld_id,
@@ -63,6 +125,7 @@ class Meld(object):
             }
 
             return jsonify(res)
+
 
 
 class MeldScriptsExtension(Extension):

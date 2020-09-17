@@ -86,7 +86,7 @@ class Component:
     def render(self, component_name):
         return self.view(component_name)
 
-    def view(self, component_name, data={}):
+    def view(self, component_name):
         context = self.__context__()
         context_variables = {}
         context_variables.update(context["attributes"])
@@ -98,10 +98,6 @@ class Component:
         frontend_context_variables = orjson.dumps(frontend_context_variables).decode(
             "utf-8"
         )
-
-        # TODO: Handle looking in other directories for templates
-        #template = template_engine.get_template(f"/templates/meld/{component_name}.html")
-        #context = Context(context_variables, autoescape=True)
 
         rendered_template = render_template(f'meld/{component_name}.html', **context_variables)
 
