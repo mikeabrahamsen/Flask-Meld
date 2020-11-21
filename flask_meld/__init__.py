@@ -22,13 +22,6 @@ def _handle_arg(arg):
     ):
         return arg[1:-1]
 
-def get_args(args):
-    found_args = []
-    arg = ""
-    dict_count = 0
-    list_count = 0
-    tuple_count = 0
-
 class Meld(object):
 
     def __init__(self, app=None):
@@ -60,7 +53,6 @@ class Meld(object):
         def test_message(message):
             """ meldID, action, componentName
             """
-            print(message)
             result = process_message(message)
             app.socketio.emit('response', result)
 
@@ -69,12 +61,10 @@ class Meld(object):
             meld_id = message["id"]
             action = message["action"]
             component_name = message["componentName"]
-            data = message["data"]
             meld_id = meld_id
 
             Component = get_component_class(component_name)
             component = Component(meld_id)
-            print(component)
             payload = action["payload"]
 
             if 'syncInput' in action["type"]:
@@ -82,18 +72,14 @@ class Meld(object):
                     setattr(component, payload['name'], payload['value'])
 
             elif "callMethod" in action["type"]:
+                data = message["data"]
                 call_method_name = payload.get("name", "")
                 method_name = call_method_name
-                print(method_name)
 
                 for arg in component.__attributes__():
                     try:
                         value = data.get(arg)
-                        print(value)
                         setattr(component, arg, value)
-                        print(component)
-                        # print("updating component: ", arg,
-                        #       getattr(component, arg))
 
                     except ValueError:
                         pass
@@ -114,17 +100,7 @@ class Meld(object):
                     if params_str == "":
                         return (method_name, params)
 
-                    # Split up mutiple args
-                    # params = params_str.split(",")
-
-                    # for idx, arg in enumerate(params):
-                    #     params[idx] = handle_arg(arg)
-
-                    params = get_args(params_str)
-
-                    # params = handle_arg(params_str)
-
-                    # TODO: Handle kwargs
+                    params = _handle_arg(params_str)
 
                 if method_name is not None and hasattr(component, method_name):
                     func = getattr(component, method_name)
@@ -168,8 +144,6 @@ class Meld(object):
                             try:
                                 value = data.get(arg)
                                 setattr(component, arg, value)
-                                # print("updating component: ", arg,
-                                #       getattr(component, arg))
 
                             except ValueError:
                                 pass

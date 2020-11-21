@@ -13,8 +13,6 @@ var Meld = (function () {
     meld.socketio = io();
 
     meld.socketio.on('response', function(responseJson) {
-      print(responseJson)
-
        if (!responseJson) {
          return
        }
@@ -24,8 +22,8 @@ var Meld = (function () {
          return
        }
 
-       //meld.setData(responseJson.data);
-       data = responseJson.data || {};
+       updateData(responseJson.data);
+       // data = responseJson.data || {};
 
        var dom = responseJson.dom;
 
@@ -43,8 +41,7 @@ var Meld = (function () {
            }
          },
          onBeforeElUpdated: function (fromEl, toEl) {
-           // Because morphdom also supports vDom nodes, it uses isSameNode to detect
-           // sameness. When dealing with DOM nodes, we want isEqualNode, otherwise
+           // When dealing with DOM nodes, we want isEqualNode, otherwise
            // isSameNode will ALWAYS return false.
            if (fromEl.isEqualNode(toEl)) {
              return false;
@@ -55,6 +52,14 @@ var Meld = (function () {
       morphdom(componentRoot, dom, morphdomOptions);
   });
 
+}
+
+function updateData(newData){
+  for (var key in newData) {
+    if (_data[key] !== null){
+      _data[key] = newData[key];
+    }
+  }
 }
 
 /*
@@ -82,9 +87,6 @@ meld.componentInit = function (args) {
 
     data[tmp[0]] = tmp[1];
     _data = data;
-
-
-
 
     if (!componentRoot) {
       Error("No id found");
@@ -127,22 +129,16 @@ meld.componentInit = function (args) {
               var action = { type: "syncInput", payload: { name: modelName, value: value } };
 
               sendMessage(componentName, componentRoot, meldId, action, debounceTime, function () {
-                setModelValues(modelEls, { id: id, key: key });
               });
             });
           } else {
             var eventType = attribute.name.replace("meld:", "");
             var methodName = attribute.value;
-            var value = data
-
 
             el.addEventListener(eventType, event => {
-              var action = { type: "callMethod", payload: { name: methodName, params: []} };
-              //print(componentName)
-              //print(methodName)
               var id = el.id;
               var key = el.getAttribute("meld:key");
-
+              var action = { type: "callMethod", payload: { name: methodName } };
               meld.call(componentName, methodName, args);
             });
           }
@@ -155,10 +151,7 @@ meld.componentInit = function (args) {
 /*
     Sets the data on the meld object.
     */
-meld.setData = function (_data) {
-  // print("this is the meld.setData function");
-  // print(_data);
-  // print(data);
+meld.setData = function (data) {
   data = _data;
 }
 
@@ -174,14 +167,14 @@ meld.call = function (componentName, methodName,args) {
     Error("No component found for: ", componentName);
   }
 
-  print(componentRoot)
   var meldId = componentRoot.getAttribute('meld:id');
 
   if (!meldId) {
     Error("No id found");
   }
 
-  var action = { type: "callMethod", payload: { name: methodName, params: [] } };
+
+  var action = { type: "callMethod", payload: { name: methodName, params: args } };
   var modelEls = [];
 
   walk(componentRoot, (el) => {
@@ -189,15 +182,9 @@ meld.call = function (componentName, methodName,args) {
       // Skip the component root element
       return
     }
-
-    if (getModelName(el)) {
-      print(el);
-      modelEls.push(el);
-    }
   });
 
-  sendMessage(componentName, componentRoot, meldId, action, 0, function () {
-    setModelValues(modelEls);
+  sendMessage(componentName, componentRoot, meldId, action, args, function () {
   });
 }
 
@@ -230,7 +217,6 @@ function walk(el, callback) {
     callback(walker.currentNode);
   }
 }
-
 /*
     Get a value from an element. Tries to deal with HTML weirdnesses.
     */
@@ -254,146 +240,10 @@ function getValue(el) {
 }
 
 /*
-    Sets all model values.
-
-    `elementToExclude`: Prevent a particular element from being updated. Object example: `{id: 'elementId', key: 'elementKey'}`.
-    */
-function setModelValues(modelEls, elementToExclude) {
-  if (typeof elementToExclude === "undefined" || !elementToExclude) {
-    elementToExclude = {};
-  }
-
-  modelEls.forEach(function (modelEl) {
-    var modelKey = modelEl.getAttribute("meld:key");
-
-    if (modelEl.id != elementToExclude.id || modelKey != elementToExclude.key) {
-      var modelName = getModelName(modelEl);
-      setValue(modelEl, modelName);
-    }
-  });
-}
-
-/*
-    Sets the value of an element. Tries to deal with HTML weirdnesses.
-    */
-function setValue(el, modelName) {
-  var modelNamePieces = modelName.split(".");
-  // Get local version of data in case have to traverse into a nested property
-  var _data = data;
-
-  for (var i = 0; i < modelNamePieces.length; i++) {
-    var modelNamePiece = modelNamePieces[i];
-
-    if (_data.hasOwnProperty(modelNamePiece)) {
-      if (i == modelNamePieces.length - 1) {
-        if (el.type.toLowerCase() === "radio") {
-          // Handle radio buttons
-          if (el.value == _data[modelNamePiece]) {
-            el.checked = true;
-          }
-        } else if (el.type.toLowerCase() === "checkbox") {
-          // Handle checkboxes
-          el.checked = _data[modelNamePiece];
-        } else {
-          el.value = _data[modelNamePiece];
-        }
-      }
-      else {
-        _data = _data[modelNamePiece];
-      }
-    }
-  }
-}
-
-/*
     Handles calling the message endpoint and merging the results into the document.
     */
 function sendMessage(componentName, componentRoot, meldId, action, debounceTime, callback) {
   meld.socketio.emit('message', {'id': meldId, 'action':action, 'componentName': componentName, 'data': data});
-
-  // function _sendMessage() {
-
-  //     meld.socket.emit('message', {'componentName': componentName});
-  //     var syncUrl = messageUrl + '/' + componentName;
-  //     var checksum = componentRoot.getAttribute("meld:checksum");
-  //     var actionQueue = [action];
-
-  //     var body = {
-  //         id: meldId,
-  //         data: data,
-  //         checksum: checksum,
-  //         actionQueue: actionQueue,
-  //     };
-
-  //     var headers = {
-  //         'Content-Type': 'application/json',
-  //         'X-Requested-With': 'XMLHttpRequest',
-  //     };
-  //     //headers[csrfTokenHeaderName] = getCsrfToken();
-
-  //     fetch(syncUrl, {
-  //         method: "POST",
-  //         headers: headers,
-  //         body: JSON.stringify(body),
-  //     })
-  //         .then(function (response) {
-  //             if (response.ok) {
-  //                 return response.json();
-  //             } else {
-  //                 console.error("Error when getting response: " + response.statusText + " (" + response.status + ")");
-  //             }
-  //         })
-  //         .then(function (responseJson) {
-  //             if (!responseJson) {
-  //                 return
-  //             }
-
-  //             if (responseJson.error) {
-  //                 console.error(responseJson.error);
-  //                 return
-  //             }
-
-  //             //meld.setData(responseJson.data);
-  //             data = responseJson.data || {};
-
-  //             var dom = responseJson.dom;
-
-  //             var morphdomOptions = {
-  //                 childrenOnly: false,
-  //                 getNodeKey: function (node) {
-  //                     // A node's unique identifier. Used to rearrange elements rather than
-  //                     // creating and destroying an element that already exists.
-  //                     if (node.attributes) {
-  //                         var key = node.getAttribute("meld:key") || node.id;
-
-  //                         if (key) {
-  //                             return key;
-  //                         }
-  //                     }
-  //                 },
-  //                 onBeforeElUpdated: function (fromEl, toEl) {
-  //                     // Because morphdom also supports vDom nodes, it uses isSameNode to detect
-  //                     // sameness. When dealing with DOM nodes, we want isEqualNode, otherwise
-  //                     // isSameNode will ALWAYS return false.
-  //                     if (fromEl.isEqualNode(toEl)) {
-  //                         return false;
-  //                     }
-  //                 },
-  //             }
-
-  //             morphdom(componentRoot, dom, morphdomOptions);
-
-  //             if (callback && typeof callback === "function") {
-  //                 callback();
-  //             }
-  //         });
-  // }
-
-  // if (debounceTime == -1) {
-  //     queue(_sendMessage, 250)();
-  // } else {
-  //     debounce(_sendMessage, debounceTime)();
-  // }
 }
 
 /*
