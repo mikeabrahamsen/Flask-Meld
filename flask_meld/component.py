@@ -114,6 +114,7 @@ class Component:
         root_element = Component._get_root_element(soup)
         root_element["meld:id"] = str(self.id)
         root_element["meld:data"] = frontend_context_variables
+        self.set_values(root_element, context_variables)
 
         script = soup.new_tag("script")
         init = {
@@ -127,6 +128,14 @@ class Component:
         rendered_template = Component._desoupify(soup)
 
         return rendered_template
+
+    def set_values(self, soup, context_variables):
+        for element in soup:
+            try:
+                if "meld:model" in element.attrs:
+                    element.attrs["value"] = context_variables[element.attrs["meld:model"]]
+            except Exception as e:
+                pass
 
     @staticmethod
     def _is_public_name(name):
