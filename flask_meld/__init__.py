@@ -57,7 +57,6 @@ class Meld(object):
             app.socketio.emit('response', result)
 
         def process_message(message):
-            print(message)
             meld_id = message["id"]
             action = message["action"]
             component_name = message["componentName"]
@@ -83,6 +82,8 @@ class Meld(object):
 
                     except ValueError:
                         pass
+                    except AttributeError as e:
+                        print(f"{e}: {arg}-{value}")
 
                 method_name = call_method_name
                 params = []

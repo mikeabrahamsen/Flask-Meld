@@ -23,8 +23,6 @@ var Meld = (function () {
        }
 
        updateData(responseJson.data);
-       // data = responseJson.data || {};
-
        var dom = responseJson.dom;
 
        var morphdomOptions = {
@@ -58,19 +56,6 @@ function updateData(newData){
   for (var key in newData) {
     if (_data[key] !== null){
       _data[key] = newData[key];
-    }
-  }
-}
-
-/*
-    Gets the value of the `meld:model` attribute from an element even if there are modifiers.
-    */
-function getModelName(el) {
-  for (var i = 0; i < el.attributes.length; i++) {
-    var attribute = el.attributes[i];
-
-    if (attribute.name.indexOf("meld:model") > -1) {
-      return el.getAttribute(attribute.name);
     }
   }
 }
@@ -147,13 +132,6 @@ meld.componentInit = function (args) {
     });
 
 };
-
-/*
-    Sets the data on the meld object.
-    */
-meld.setData = function (data) {
-  data = _data;
-}
 
 /*
     Call an action on the specified component.
