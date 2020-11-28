@@ -1,15 +1,16 @@
-from flask import send_from_directory, jsonify, request
+from flask import send_from_directory
 import os
 
 from jinja2 import nodes
 from jinja2.ext import Extension
 
-from .component import get_component_class  # , Component
+from .component import get_component_class
 
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
 
 __version__ = '0.0.1'
+
 
 def _handle_arg(arg):
     """
@@ -22,8 +23,8 @@ def _handle_arg(arg):
     ):
         return arg[1:-1]
 
-class Meld(object):
 
+class Meld(object):
     def __init__(self, app=None):
         self.app = app
 
@@ -119,89 +120,11 @@ class Meld(object):
             }
             return res
 
-        @app.route("/message")
-        @app.route("/message/<string:component_name>", methods=['GET', 'POST'])
-        def message(component_name):
-            body = request.get_json()
-            meld_id = body.get("id")
-            action_queue = body.get("actionQueue")
-
-            Component = get_component_class(component_name)
-            component = Component(meld_id)
-
-            if action_queue:
-                for action in action_queue:
-                    payload = action["payload"]
-                    if 'syncInput' in action["type"]:
-                        if hasattr(component, payload['name']):
-                            setattr(component, payload['name'], payload['value'])
-
-                    elif "callMethod" in action["type"]:
-                        call_method_name = payload.get("name", "")
-                        method_name = call_method_name
-                        data = body['data']
-
-                        for arg in component.__attributes__():
-                            try:
-                                value = data.get(arg)
-                                setattr(component, arg, value)
-
-                            except ValueError:
-                                pass
-
-                        method_name = call_method_name
-                        params = []
-
-                        if "(" in call_method_name and call_method_name.endswith(")"):
-                            param_idx = call_method_name.index("(")
-                            params_str = call_method_name[param_idx:]
-
-                            # Remove the arguments from the method name
-                            method_name = call_method_name.replace(params_str, "")
-
-                            # Remove parenthesis
-                            params_str = params_str[1:-1]
-
-                            if params_str == "":
-                                return (method_name, params)
-
-                            # Split up mutiple args
-                            # params = params_str.split(",")
-
-                            # for idx, arg in enumerate(params):
-                            #     params[idx] = handle_arg(arg)
-
-                            params = get_args(params_str)
-
-                            # params = handle_arg(params_str)
-
-                            # TODO: Handle kwargs
-
-                        if method_name is not None and hasattr(component, method_name):
-                            func = getattr(component, method_name)
-
-                            if params:
-                                func(*params)
-                            else:
-                                func()
-
-            rendered_component = component.render(component_name)
-
-            res = {
-                "id": meld_id,
-                "dom": rendered_component,
-                "data": component.__attributes__()
-            }
-            #print(res)
-
-            return jsonify(res)
-
-
 
 class MeldScriptsExtension(Extension):
     """
-    Create a {% meld %} tag.
-    Used as {% meld 'component_name' %}
+    Create a {% meld_scripts %} tag.
+    Used to add the necessary js files to init meld
     """
 
     tags = {'meld_scripts'}
@@ -241,7 +164,6 @@ class MeldExtension(Extension):
         return nodes.Output([nodes.MarkSafe(call)]).set_lineno(lineno)
 
     def _render(self, component):
-        # return render_template(self.environment.get_template(f'meld/example.html'))
         mn = MeldNode(component)
         return mn.render()
 
