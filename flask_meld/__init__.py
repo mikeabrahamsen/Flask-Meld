@@ -51,7 +51,7 @@ class Meld(object):
                          self.send_static_file)
 
         @app.socketio.on('message')
-        def test_message(message):
+        def meld_message(message):
             """ meldID, action, componentName
             """
             result = process_message(message)
