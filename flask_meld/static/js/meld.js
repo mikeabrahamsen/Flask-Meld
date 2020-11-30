@@ -5,6 +5,7 @@ var Meld = (function () {
   var csrfTokenHeaderName = 'X-CSRFToken';
   var data = {};
   const components = {};
+  var _data = null;
 
   /*
     Initializes the meld object.
