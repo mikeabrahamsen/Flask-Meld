@@ -58,6 +58,7 @@ class Meld(object):
             app.socketio.emit('response', result)
 
         def process_message(message):
+            print(message)
             meld_id = message["id"]
             action = message["action"]
             component_name = message["componentName"]
