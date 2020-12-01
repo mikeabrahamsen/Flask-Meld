@@ -50,6 +50,7 @@ var Meld = (function () {
        }
       var componentRoot = $('[meld\\:id="' + responseJson.id + '"]');
       morphdom(componentRoot, dom, morphdomOptions);
+      components[responseJson.id].refreshEventListeners()
   });
 
 }
@@ -74,7 +75,7 @@ function addModelEventListener(component, el, eventType) {
       },
     };
 
-    sendMessage(component.name, component.root, component.id, action, function () {
+    sendMessage(component, component.root, component.id, action, function () {
     });
   });
 }
@@ -432,17 +433,17 @@ function addActionEventListener(component, eventType) {
           if (action.isStop) {
             event.stopPropagation();
           }
+          print(action)
           var method = { type: "callMethod", payload: { name: action.name } };
           if (action.key) {
             print(action.key)
             print(event.key.toLowerCase())
             if (action.key === event.key.toLowerCase()) {
-              print(action)
-              sendMessage(component.name, this.root, component.id, method, function () {
+              sendMessage(component, this.root, component.id, method, function () {
               })
             }
           } else {
-              sendMessage(component.name, this.root, component.id, method, function () {
+              sendMessage(component, this.root, component.id, method, function () {
               })
           }
         }
@@ -571,7 +572,6 @@ class Component {
     */
 meld.componentInit = function (args) {
   const component = new Component(args);
-  component.init();
   components[component.id] = component;
 
 };
@@ -681,8 +681,8 @@ function getValue(el) {
 /*
     Handles calling the message endpoint and merging the results into the document.
     */
-function sendMessage(componentName, componentRoot, meldId, action, callback) {
-  meld.socketio.emit('message', {'id': meldId, 'action':action, 'componentName': componentName, 'data': data});
+function sendMessage(component, componentRoot, meldId, action, callback) {
+  meld.socketio.emit('message', {'id': meldId, 'action':action, 'componentName': component.name, 'data': data});
 }
 
 /*

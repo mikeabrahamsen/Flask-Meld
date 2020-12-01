@@ -12,18 +12,6 @@ from flask_socketio import SocketIO
 __version__ = '0.0.1'
 
 
-def _handle_arg(arg):
-    """
-    Clean up arguments. Mostly used to handle strings.
-    Returns:
-        Cleaned up argument.
-    """
-    if (arg.startswith("'") and arg.endswith("'")) or (
-        arg.startswith('"') and arg.endswith('"')
-    ):
-        return arg[1:-1]
-
-
 class Meld(object):
     def __init__(self, app=None):
         self.app = app
@@ -58,7 +46,6 @@ class Meld(object):
             app.socketio.emit('response', result)
 
         def process_message(message):
-            print(message)
             meld_id = message["id"]
             action = message["action"]
             component_name = message["componentName"]
@@ -88,7 +75,7 @@ class Meld(object):
                         print(f"{e}: {arg}-{value}")
 
                 method_name = call_method_name
-                params = []
+                params = None
 
                 if "(" in call_method_name and call_method_name.endswith(")"):
                     param_idx = call_method_name.index("(")
@@ -99,11 +86,10 @@ class Meld(object):
 
                     # Remove parenthesis
                     params_str = params_str[1:-1]
-
                     if params_str == "":
-                        return (method_name, params)
-
-                    params = _handle_arg(params_str)
+                        return method_name
+                    else:
+                        params = params_str.split(',')
 
                 if method_name is not None and hasattr(component, method_name):
                     func = getattr(component, method_name)
