@@ -3,9 +3,6 @@ from .component import get_component_class
 from jinja2 import nodes
 from jinja2.ext import Extension
 
-class MeldViewError(Exception):
-    pass
-
 
 def _set_property_from_payload(component, payload, data):
     """

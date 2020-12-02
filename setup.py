@@ -26,7 +26,9 @@ setup(
     install_requires=[
         'Flask>=0.9',
         'beautifulsoup4',
-        'orjson'
+        'orjson',
+        'flask-socketio',
+        'gevent-websocket',
     ],
     tests_require=[
         'pytest'

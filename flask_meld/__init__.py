@@ -6,9 +6,21 @@ from jinja2.ext import Extension
 
 from .component import get_component_class  # , Component
 
+from flask_socketio import SocketIO, emit
 
-__version__ = '0.0.1'
 
+__version__ = '0.0.2'
+
+def _handle_arg(arg):
+    """
+    Clean up arguments. Mostly used to handle strings.
+    Returns:
+        Cleaned up argument.
+    """
+    if (arg.startswith("'") and arg.endswith("'")) or (
+        arg.startswith('"') and arg.endswith('"')
+    ):
+        return arg[1:-1]
 
 class Meld(object):
 
@@ -27,14 +39,84 @@ class Meld(object):
     def init_app(self, app):
         app.jinja_env.add_extension(MeldExtension)
         app.jinja_env.add_extension(MeldScriptsExtension)
+        app.socketio = SocketIO(app)
 
-        # if not app.config.get('SECRET_KEY'):
-        #     raise RuntimeError(
-        #         "The Flask-Meld requires the 'SECRET_KEY' config "
-        #         "variable to be set")
+        if not app.config.get('SECRET_KEY'):
+            raise RuntimeError(
+                "The Flask-Meld requires the 'SECRET_KEY' config "
+                "variable to be set")
 
         app.add_url_rule('/_meld/static/js/<path:filename>', None,
                          self.send_static_file)
+
+        @app.socketio.on('message')
+        def test_message(message):
+            """ meldID, action, componentName
+            """
+            result = process_message(message)
+            app.socketio.emit('response', result)
+
+        def process_message(message):
+            print(message)
+            meld_id = message["id"]
+            action = message["action"]
+            component_name = message["componentName"]
+            meld_id = meld_id
+
+            Component = get_component_class(component_name)
+            component = Component(meld_id)
+            payload = action["payload"]
+
+            if 'syncInput' in action["type"]:
+                if hasattr(component, payload['name']):
+                    setattr(component, payload['name'], payload['value'])
+
+            elif "callMethod" in action["type"]:
+                data = message["data"]
+                call_method_name = payload.get("name", "")
+                method_name = call_method_name
+
+                for arg in component.__attributes__():
+                    try:
+                        value = data.get(arg)
+                        setattr(component, arg, value)
+
+                    except ValueError:
+                        pass
+
+                method_name = call_method_name
+                params = []
+
+                if "(" in call_method_name and call_method_name.endswith(")"):
+                    param_idx = call_method_name.index("(")
+                    params_str = call_method_name[param_idx:]
+
+                    # Remove the arguments from the method name
+                    method_name = call_method_name.replace(params_str, "")
+
+                    # Remove parenthesis
+                    params_str = params_str[1:-1]
+
+                    if params_str == "":
+                        return (method_name, params)
+
+                    params = _handle_arg(params_str)
+
+                if method_name is not None and hasattr(component, method_name):
+                    func = getattr(component, method_name)
+
+                    if params:
+                        func(*params)
+                    else:
+                        func()
+            rendered_component = component.render(component_name)
+
+            res = {
+                "id": meld_id,
+                "dom": rendered_component,
+                "data": component.__attributes__()
+            }
+            return res
 
         @app.route("/message")
         @app.route("/message/<string:component_name>", methods=['GET', 'POST'])
@@ -42,6 +124,7 @@ class Meld(object):
             body = request.get_json()
             meld_id = body.get("id")
             action_queue = body.get("actionQueue")
+
             Component = get_component_class(component_name)
             component = Component(meld_id)
 
@@ -49,20 +132,69 @@ class Meld(object):
                 for action in action_queue:
                     payload = action["payload"]
                     if 'syncInput' in action["type"]:
-                        print(payload)
                         if hasattr(component, payload['name']):
-                            setattr(component, payload['name'],
-                                    payload['value'])
+                            setattr(component, payload['name'], payload['value'])
+
+                    elif "callMethod" in action["type"]:
+                        call_method_name = payload.get("name", "")
+                        method_name = call_method_name
+                        data = body['data']
+
+                        for arg in component.__attributes__():
+                            try:
+                                value = data.get(arg)
+                                setattr(component, arg, value)
+
+                            except ValueError:
+                                pass
+
+                        method_name = call_method_name
+                        params = []
+
+                        if "(" in call_method_name and call_method_name.endswith(")"):
+                            param_idx = call_method_name.index("(")
+                            params_str = call_method_name[param_idx:]
+
+                            # Remove the arguments from the method name
+                            method_name = call_method_name.replace(params_str, "")
+
+                            # Remove parenthesis
+                            params_str = params_str[1:-1]
+
+                            if params_str == "":
+                                return (method_name, params)
+
+                            # Split up mutiple args
+                            # params = params_str.split(",")
+
+                            # for idx, arg in enumerate(params):
+                            #     params[idx] = handle_arg(arg)
+
+                            params = get_args(params_str)
+
+                            # params = handle_arg(params_str)
+
+                            # TODO: Handle kwargs
+
+                        if method_name is not None and hasattr(component, method_name):
+                            func = getattr(component, method_name)
+
+                            if params:
+                                func(*params)
+                            else:
+                                func()
 
             rendered_component = component.render(component_name)
-            print(rendered_component)
 
             res = {
                 "id": meld_id,
                 "dom": rendered_component,
+                "data": component.__attributes__()
             }
+            #print(res)
 
             return jsonify(res)
+
 
 
 class MeldScriptsExtension(Extension):
@@ -80,7 +212,7 @@ class MeldScriptsExtension(Extension):
         return nodes.Output([nodes.MarkSafe(call)]).set_lineno(lineno)
 
     def _render(self):
-        files = ["morphdom-umd.js", "meld.js"]
+        files = ["morphdom-umd.js", "meld.js", "socket.io.js"]
         msg_url = "message"
         scripts = ""
         for f in files:
