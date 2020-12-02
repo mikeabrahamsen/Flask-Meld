@@ -9,7 +9,7 @@ from .component import get_component_class
 from flask_socketio import SocketIO
 
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 
 class Meld(object):
