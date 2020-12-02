@@ -21,7 +21,7 @@ setup(
     license='MIT',
     author='Michael Abrahamsen',
     author_email='mail@michaelabrahamsen.com',
-    description='Flask-Meld is a framework for Flask that allows you to create dynamic user interfaces using Python and the Jinja2 templating engine.',
+    description='Meld is a framework for Flask that allows you to create dynamic user interfaces using Python and the Jinja2 templating engine.',
     long_description=README,
     long_description_content_type="text/markdown",
     packages=['flask_meld'],
@@ -29,11 +29,11 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Flask>=0.9',
+        'Flask',
         'beautifulsoup4',
         'orjson',
         'flask-socketio',
-        'gevent-websocket>=0.10.1'
+        'gevent-websocket'
     ],
     tests_require=[
         'pytest'
