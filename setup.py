@@ -27,7 +27,8 @@ setup(
         'Flask>=0.9',
         'beautifulsoup4',
         'orjson',
-        'flask-socketio'
+        'flask-socketio',
+        'gevent-websocket',
     ],
     tests_require=[
         'pytest'

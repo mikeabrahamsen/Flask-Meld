@@ -9,7 +9,7 @@ from .component import get_component_class  # , Component
 from flask_socketio import SocketIO, emit
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 def _handle_arg(arg):
     """
