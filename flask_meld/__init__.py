@@ -9,10 +9,10 @@ from .component import get_component_class
 from flask_socketio import SocketIO
 
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
-class Meld(object):
+class Meld():
     def __init__(self, app=None):
         self.app = app
 
