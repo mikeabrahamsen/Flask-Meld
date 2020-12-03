@@ -1,4 +1,4 @@
-from flask import send_from_directory
+from flask import send_from_directory, url_for
 import os
 
 from jinja2 import nodes
@@ -35,7 +35,7 @@ class Meld(object):
                 "The Flask-Meld requires the 'SECRET_KEY' config "
                 "variable to be set")
 
-        app.add_url_rule('/_meld/static/js/<path:filename>', None,
+        app.add_url_rule('/static/meld/<path:filename>', None,
                          self.send_static_file)
 
         @app.socketio.on('message')
@@ -127,7 +127,8 @@ class MeldScriptsExtension(Extension):
         msg_url = "message"
         scripts = ""
         for f in files:
-            scripts += f'<script src="_meld/static/js/{f}"></script>'
+            url = url_for('static', filename=f'meld/{f}')
+            scripts += f'<script src="{url}"></script>'
 
         scripts += f'<script>var url = "{msg_url}"; Meld.init(url); </script>'
 
