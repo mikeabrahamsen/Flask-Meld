@@ -3,27 +3,29 @@ import inspect
 import uuid
 
 import orjson
-from flask import render_template
+from flask import render_template, current_app
 from bs4 import BeautifulSoup
 from bs4.formatter import HTMLFormatter
 
 
 def convert_to_snake_case(s):
-    # TODO: Better handling of dash->snake
     s.replace("-", "_")
     return s
 
 
 def convert_to_camel_case(s):
-    # TODO: Better handling of dash/snake->camel-case
     s = convert_to_snake_case(s)
     return "".join(word.title() for word in s.split("_"))
 
 
 def get_component_class(component_name):
-    # TODO: Handle the module not being found
     module_name = convert_to_snake_case(component_name)
-    module = importlib.import_module(f"meld.components.{module_name}")
+    # TODO: Allow the user to specify a module with a config variable
+    name = getattr(current_app, "name", "__main__")
+    try:
+        module = importlib.import_module(f"{name}.meld.components.{module_name}")
+    except ModuleNotFoundError:
+        module = importlib.import_module(f"meld.components.{module_name}")
 
     # TODO: Handle the class not being found
     class_name = convert_to_camel_case(module_name)
@@ -66,7 +68,6 @@ class Component:
         Get methods that can be called in the component.
         """
 
-        # TODO: Should only take methods that only have self argument?
         member_methods = inspect.getmembers(self, inspect.ismethod)
         public_methods = filter(
             lambda method: Component._is_public_name(method[0]), member_methods
