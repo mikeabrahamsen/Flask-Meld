@@ -106,7 +106,7 @@ Here is an example for counter:
 ```
 Let's take a look at that template file in more detail.
 
-The buttons uses `meld:click` to call the `add` or `subtract` function of the
+The buttons use `meld:click` to call the `add` or `subtract` function of the
 Counter component.
 The input uses `meld:model` to bind the input to the `count` property on the
 Counter component.
