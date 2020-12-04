@@ -1,6 +1,8 @@
 import importlib
 import inspect
 import uuid
+from importlib.util import spec_from_loader, module_from_spec
+import importlib.machinery
 
 import orjson
 from flask import render_template, current_app
@@ -20,14 +22,30 @@ def convert_to_camel_case(s):
 
 def get_component_class(component_name):
     module_name = convert_to_snake_case(component_name)
-    # TODO: Allow the user to specify a module with a config variable
-    name = getattr(current_app, "name", "__main__")
-    try:
-        module = importlib.import_module(f"{name}.meld.components.{module_name}")
-    except ModuleNotFoundError:
-        module = importlib.import_module(f"meld.components.{module_name}")
+    user_specified_dir = current_app.config.get("MELD_COMPONENT_DIR", None)
 
-    # TODO: Handle the class not being found
+    if not user_specified_dir:
+        name = getattr(current_app, "name", None)
+        try:
+            module = importlib.import_module(
+                f"{name}.meld.components.{module_name}"
+            )
+        except ModuleNotFoundError:
+            module = importlib.import_module(f"meld.components.{module_name}")
+    else:
+        try:
+            full_path = str(user_specified_dir.join(module_name + ".py"))
+            loader = importlib.machinery.SourceFileLoader(
+                module_name, full_path
+            )
+            spec = spec_from_loader(loader.name, loader)
+            module = module_from_spec(spec)
+            loader.exec_module(module)
+        except FileNotFoundError:
+            module = importlib.import_module(
+                f"{user_specified_dir}.components.{module_name}"
+            )
+
     class_name = convert_to_camel_case(module_name)
     component_class = getattr(module, class_name)
 

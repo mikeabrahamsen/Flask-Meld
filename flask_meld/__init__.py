@@ -30,6 +30,14 @@ class Meld():
         app.jinja_env.add_extension(MeldScriptsExtension)
         app.socketio = SocketIO(app)
 
+        meld_dir = app.config.get("MELD_COMPONENT_DIR", None)
+        if meld_dir:
+            if not os.path.isabs(meld_dir):
+                directory = os.path.abspath(os.path.join(
+                    app.root_path, meld_dir))
+                print(directory)
+                app.config["MELD_COMPONENT_DIR"] = directory
+
         if not app.config.get('SECRET_KEY'):
             raise RuntimeError(
                 "The Flask-Meld requires the 'SECRET_KEY' config "
