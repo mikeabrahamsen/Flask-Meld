@@ -35,7 +35,6 @@ class Meld():
             if not os.path.isabs(meld_dir):
                 directory = os.path.abspath(os.path.join(
                     app.root_path, meld_dir))
-                print(directory)
                 app.config["MELD_COMPONENT_DIR"] = directory
 
         if not app.config.get('SECRET_KEY'):

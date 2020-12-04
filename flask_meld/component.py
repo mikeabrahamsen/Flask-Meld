@@ -1,7 +1,8 @@
 import importlib
 import inspect
 import uuid
-from importlib.util import spec_from_loader, module_from_spec
+import os
+from importlib.util import module_from_spec, spec_from_file_location
 import importlib.machinery
 
 import orjson
@@ -34,17 +35,17 @@ def get_component_class(component_name):
             module = importlib.import_module(f"meld.components.{module_name}")
     else:
         try:
-            full_path = str(user_specified_dir.join(module_name + ".py"))
-            loader = importlib.machinery.SourceFileLoader(
-                module_name, full_path
-            )
-            spec = spec_from_loader(loader.name, loader)
+            full_path = os.path.join(user_specified_dir, module_name + ".py")
+            spec = spec_from_file_location(module_name, full_path)
             module = module_from_spec(spec)
-            loader.exec_module(module)
+            spec.loader.exec_module(module)
         except FileNotFoundError:
-            module = importlib.import_module(
-                f"{user_specified_dir}.components.{module_name}"
+            full_path = os.path.join(
+                user_specified_dir, "components",  module_name + ".py"
             )
+            spec = spec_from_file_location(module_name, full_path)
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
 
     class_name = convert_to_camel_case(module_name)
     component_class = getattr(module, class_name)
