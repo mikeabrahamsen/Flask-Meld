@@ -3,7 +3,7 @@ import inspect
 import uuid
 
 import orjson
-from flask import render_template, current_app
+from flask import render_template, current_app, url_for
 from bs4 import BeautifulSoup
 from bs4.formatter import HTMLFormatter
 
@@ -117,13 +117,17 @@ class Component:
         root_element["meld:data"] = frontend_context_variables
         self.set_values(root_element, context_variables)
 
-        script = soup.new_tag("script")
+        script = soup.new_tag("script", type="module")
         init = {
             "id": str(self.id),
             "name": component_name,
+            "data": data
         }
         init = orjson.dumps(init).decode("utf-8")
-        script.string = f"Meld.componentInit({init});"
+
+        meld_url = url_for('static', filename='meld/meld.js')
+        meld_import = f'import {{Meld}} from ".{meld_url}";'
+        script.string = f"{meld_import} Meld.componentInit({init});"
         root_element.append(script)
 
         rendered_template = Component._desoupify(soup)
