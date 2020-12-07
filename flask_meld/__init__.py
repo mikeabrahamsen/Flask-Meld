@@ -123,14 +123,17 @@ class MeldScriptsExtension(Extension):
         return nodes.Output([nodes.MarkSafe(call)]).set_lineno(lineno)
 
     def _render(self):
-        files = ["morphdom-umd.js", "meld.js", "socket.io.js"]
+        files = ["morphdom-umd.js", "socket.io.js"]
         msg_url = "message"
         scripts = ""
         for f in files:
             url = url_for('static', filename=f'meld/{f}')
             scripts += f'<script src="{url}"></script>'
 
-        scripts += f'<script>var url = "{msg_url}"; Meld.init(url); </script>'
+        meld_url = url_for('static', filename='meld/meld.js')
+        meld_import = f'import {{Meld}} from ".{meld_url}";'
+        scripts += f'<script type="module" src="{meld_url}"></script>'
+        scripts += f'<script type="module">var url = "{msg_url}"; {meld_import} Meld.init(url); </script>'
 
         return scripts
 
