@@ -49,13 +49,13 @@ def client(app_factory):
     return app_factory.test_client()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def app_factory_ctx(app_factory):
     with app_factory.app_context() as ctx:
         yield ctx
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def app_ctx(app):
     with app.app_context() as ctx:
         yield ctx
