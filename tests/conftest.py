@@ -3,17 +3,21 @@ from flask import Flask
 from flask_meld import Meld
 
 
+def write_component_class_contents(component_file):
+    with component_file.open('w') as f:
+        class_def = ["from flask_meld.component import Component",
+                     "class Search(Component):",
+                     "\tstate=''"]
+        f.writelines(f"{line}\n" for line in class_def)
+
+
 @pytest.fixture(scope='module')
 def app(tmpdir_factory):
     # create directory structure of project/meld/components
     app_dir = tmpdir_factory.mktemp('meld')
     app_dir.mkdir('components')
-    module = app_dir.join("search.py")
-    with module.open('w') as f:
-        class_def = ["from flask_meld.component import Component",
-                     "class Search(Component):",
-                     "\tstate=''"]
-        f.writelines(f"{line}\n" for line in class_def)
+    component = app_dir.join("search.py")
+    write_component_class_contents(component)
 
     meld = Meld()
     app = Flask(__name__)
@@ -28,12 +32,8 @@ def app_factory(tmpdir_factory):
     # create directory structure of project/app/meld/components
     app_dir = tmpdir_factory.mktemp('app')
     app_dir = app_dir.mkdir('meld').mkdir('components')
-    module = app_dir.join("search.py")
-    with module.open('w') as f:
-        class_def = ["from flask_meld.component import Component",
-                     "class Search(Component):",
-                     "\tstate=''"]
-        f.writelines(f"{line}\n" for line in class_def)
+    component = app_dir.join("search.py")
+    write_component_class_contents(component)
 
     meld = Meld()
     app = Flask(__name__)
