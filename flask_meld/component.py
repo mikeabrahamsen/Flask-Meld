@@ -41,6 +41,7 @@ def get_component_module(module_name):
             )
         except ModuleNotFoundError:
             module = importlib.import_module(f"meld.components.{module_name}")
+        return module
     else:
         try:
             full_path = os.path.join(user_specified_dir, module_name + ".py")
