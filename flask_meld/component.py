@@ -1,6 +1,9 @@
 import importlib
 import inspect
 import uuid
+import os
+from importlib.util import module_from_spec, spec_from_file_location
+import importlib.machinery
 
 import orjson
 from flask import render_template, current_app, url_for
@@ -20,18 +23,39 @@ def convert_to_camel_case(s):
 
 def get_component_class(component_name):
     module_name = convert_to_snake_case(component_name)
-    # TODO: Allow the user to specify a module with a config variable
-    name = getattr(current_app, "name", "__main__")
-    try:
-        module = importlib.import_module(f"{name}.meld.components.{module_name}")
-    except ModuleNotFoundError:
-        module = importlib.import_module(f"meld.components.{module_name}")
-
-    # TODO: Handle the class not being found
     class_name = convert_to_camel_case(module_name)
+    module = get_component_module(module_name)
     component_class = getattr(module, class_name)
 
     return component_class
+
+
+def get_component_module(module_name):
+    user_specified_dir = current_app.config.get("MELD_COMPONENT_DIR", None)
+
+    if not user_specified_dir:
+        name = getattr(current_app, "name", None)
+        try:
+            module = importlib.import_module(
+                f"{name}.meld.components.{module_name}"
+            )
+        except ModuleNotFoundError:
+            module = importlib.import_module(f"meld.components.{module_name}")
+        return module
+    else:
+        try:
+            full_path = os.path.join(user_specified_dir, module_name + ".py")
+            spec = spec_from_file_location(module_name, full_path)
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except FileNotFoundError:
+            full_path = os.path.join(
+                user_specified_dir, "components",  module_name + ".py"
+            )
+            spec = spec_from_file_location(module_name, full_path)
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+        return module
 
 
 class Component:
