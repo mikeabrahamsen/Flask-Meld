@@ -23,6 +23,14 @@ def convert_to_camel_case(s):
 
 def get_component_class(component_name):
     module_name = convert_to_snake_case(component_name)
+    class_name = convert_to_camel_case(module_name)
+    module = get_component_module(module_name)
+    component_class = getattr(module, class_name)
+
+    return component_class
+
+
+def get_component_module(module_name):
     user_specified_dir = current_app.config.get("MELD_COMPONENT_DIR", None)
 
     if not user_specified_dir:
@@ -46,11 +54,7 @@ def get_component_class(component_name):
             spec = spec_from_file_location(module_name, full_path)
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-
-    class_name = convert_to_camel_case(module_name)
-    component_class = getattr(module, class_name)
-
-    return component_class
+        return module
 
 
 class Component:
