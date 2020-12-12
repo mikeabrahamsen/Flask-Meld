@@ -33,8 +33,7 @@ def get_component_module(module_name):
 
     if not user_specified_dir:
         name = getattr(current_app, "name", None)
-        full_path = os.path.join(name, "meld", "components",
-                                 module_name + ".py")
+        full_path = os.path.join(name, "meld", "components", module_name + ".py")
         module = load_module_from_path(full_path, module_name)
         return module
     else:
@@ -43,7 +42,7 @@ def get_component_module(module_name):
             module = load_module_from_path(full_path, module_name)
         except FileNotFoundError:
             full_path = os.path.join(
-                user_specified_dir, "components",  module_name + ".py"
+                user_specified_dir, "components", module_name + ".py"
             )
             module = load_module_from_path(full_path, module_name)
         return module
@@ -63,9 +62,12 @@ class Component:
 
         self.id = id
         self._data = {}
+        self.errors = {}
 
     def __repr__(self):
-        return f"<meld.Component {self.__class__.__name__}-vars{self.__attributes__()})>"
+        return (
+            f"<meld.Component {self.__class__.__name__}-vars{self.__attributes__()})>"
+        )
 
     def __attributes__(self):
         """
@@ -75,7 +77,10 @@ class Component:
             member[0] for member in inspect.getmembers(self, lambda x: not callable(x))
         ]
         attribute_names = list(
-            filter(lambda name: Component._is_public_name(name), non_callables,)
+            filter(
+                lambda name: Component._is_public_name(name),
+                non_callables,
+            )
         )
 
         attributes = {}
@@ -131,7 +136,9 @@ class Component:
             "utf-8"
         )
 
-        rendered_template = render_template(f'meld/{component_name}.html', **context_variables)
+        rendered_template = render_template(
+            f"meld/{component_name}.html", **context_variables
+        )
 
         soup = BeautifulSoup(rendered_template, features="html.parser")
         root_element = Component._get_root_element(soup)
@@ -140,14 +147,10 @@ class Component:
         self.set_values(root_element, context_variables)
 
         script = soup.new_tag("script", type="module")
-        init = {
-            "id": str(self.id),
-            "name": component_name,
-            "data": data
-        }
+        init = {"id": str(self.id), "name": component_name, "data": data}
         init = orjson.dumps(init).decode("utf-8")
 
-        meld_url = url_for('static', filename='meld/meld.js')
+        meld_url = url_for("static", filename="meld/meld.js")
         meld_import = f'import {{Meld}} from ".{meld_url}";'
         script.string = f"{meld_import} Meld.componentInit({init});"
         root_element.append(script)
@@ -160,7 +163,9 @@ class Component:
         for element in soup:
             try:
                 if "meld:model" in element.attrs:
-                    element.attrs["value"] = context_variables[element.attrs["meld:model"]]
+                    element.attrs["value"] = context_variables[
+                        element.attrs["meld:model"]
+                    ]
             except Exception as e:
                 pass
 
