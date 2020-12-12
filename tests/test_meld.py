@@ -25,5 +25,5 @@ def test_module_load_exception_with_app_factory(app_factory_ctx):
 def test_module_load_exception_without_user_specified_dir(app):
     app.config["MELD_COMPONENT_DIR"] = None
     with app.app_context():
-        with pytest.raises(ModuleNotFoundError):
+        with pytest.raises(FileNotFoundError):
             get_component_class("non-existant-module")

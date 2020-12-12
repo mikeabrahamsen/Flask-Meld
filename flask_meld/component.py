@@ -1,9 +1,7 @@
-import importlib
 import inspect
 import uuid
 import os
 from importlib.util import module_from_spec, spec_from_file_location
-import importlib.machinery
 
 import orjson
 from flask import render_template, current_app, url_for
@@ -35,27 +33,27 @@ def get_component_module(module_name):
 
     if not user_specified_dir:
         name = getattr(current_app, "name", None)
-        try:
-            module = importlib.import_module(
-                f"{name}.meld.components.{module_name}"
-            )
-        except ModuleNotFoundError:
-            module = importlib.import_module(f"meld.components.{module_name}")
+        full_path = os.path.join(name, "meld", "components",
+                                 module_name + ".py")
+        module = load_module_from_path(full_path, module_name)
         return module
     else:
         try:
             full_path = os.path.join(user_specified_dir, module_name + ".py")
-            spec = spec_from_file_location(module_name, full_path)
-            module = module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module = load_module_from_path(full_path, module_name)
         except FileNotFoundError:
             full_path = os.path.join(
                 user_specified_dir, "components",  module_name + ".py"
             )
-            spec = spec_from_file_location(module_name, full_path)
-            module = module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module = load_module_from_path(full_path, module_name)
         return module
+
+
+def load_module_from_path(full_path, module_name):
+    spec = spec_from_file_location(module_name, full_path)
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class Component:
