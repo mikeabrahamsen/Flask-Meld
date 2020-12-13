@@ -150,9 +150,9 @@ addActionEventListener(component, eventType) {
     if (!this.root) {
       throw Error("No id found");
     }
-    var rc = this.root.getAttribute('meld:data');
-    var tmp = rc.replace(/[\"{}]/g,"").split(":");
-    this.data[tmp[0]] = tmp[1];
+    var componentData = this.root.getAttribute('meld:data');
+    const parsedData = JSON.parse(componentData);
+    this.data = parsedData;
   }
   refreshEventListeners() {
     this.actionEvents = {};

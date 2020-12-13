@@ -7,8 +7,9 @@ def process_message(message):
     component_name = message["componentName"]
     meld_id = meld_id
 
+    data = message["data"]
     Component = get_component_class(component_name)
-    component = Component(meld_id)
+    component = Component(meld_id, **data)
     payload = action["payload"]
 
     if "syncInput" in action["type"]:
@@ -20,17 +21,6 @@ def process_message(message):
         call_method_name = payload.get("name", "")
         method_name = call_method_name
 
-        for arg in component.__attributes__():
-            try:
-                value = data.get(arg)
-                setattr(component, arg, value)
-
-            except ValueError:
-                pass
-            except AttributeError as e:
-                print(f"{e}: {arg}-{value}")
-
-        method_name = call_method_name
         params = None
 
         if "(" in call_method_name and call_method_name.endswith(")"):
@@ -56,5 +46,5 @@ def process_message(message):
                 func()
     rendered_component = component.render(component_name)
 
-    res = {"id": meld_id, "dom": rendered_component, "data": component.__attributes__()}
+    res = {"id": meld_id, "dom": rendered_component, "data": component._attributes()}
     return res

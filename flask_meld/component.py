@@ -1,4 +1,3 @@
-import inspect
 import uuid
 import os
 from importlib.util import module_from_spec, spec_from_file_location
@@ -56,10 +55,10 @@ def load_module_from_path(full_path, module_name):
 
 
 class Component:
-    def __init__(self, id=None):
+    def __init__(self, id=None, **kwargs):
         if not id:
             id = uuid.uuid4()
-
+        self.__dict__.update(**kwargs)
         self.id = id
         self._data = {}
         self._errors = {}
