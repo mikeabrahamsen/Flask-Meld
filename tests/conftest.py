@@ -13,10 +13,10 @@ def init_app(app_dir):
     return app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def app(tmpdir_factory):
     # create directory structure of project/meld/components
-    app_dir = tmpdir_factory.mktemp('project', numbered=False)
+    app_dir = tmpdir_factory.mktemp("project", numbered=False)
     meld = Meld()
     app = Flask(f"{app_dir}")
     create_test_component(app_dir)
@@ -25,18 +25,17 @@ def app(tmpdir_factory):
     return app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def app_factory(tmpdir_factory):
     # create directory structure of project/app/meld/components
-    project_dir = tmpdir_factory.mktemp('app_factory_project', numbered=False)
+    project_dir = tmpdir_factory.mktemp("app_factory_project", numbered=False)
     Path(f"{project_dir}/app").mkdir(parents=True, exist_ok=True)
     app_dir = Path(f"{project_dir}/app")
 
     create_test_component(f"{app_dir}")
     factory_init = Path(f"{app_dir}/__init__.py")
     write_init_contents(factory_init)
-    spec = spec_from_file_location(f"{app_dir}",
-                                   f"{app_dir}/__init__.py")
+    spec = spec_from_file_location(f"{app_dir}", f"{app_dir}/__init__.py")
     test = module_from_spec(spec)
     spec.loader.exec_module(test)
 
@@ -74,22 +73,25 @@ def create_test_component(app_dir):
 
 
 def write_component_class_contents(component_file):
-    with component_file.open('w') as f:
-        class_def = ["from flask_meld.component import Component",
-                     "class Search(Component):",
-                     "\tstate=''"]
+    with component_file.open("w") as f:
+        class_def = [
+            "from flask_meld.component import Component",
+            "class Search(Component):",
+            "\tstate=''",
+        ]
         f.writelines(f"{line}\n" for line in class_def)
 
 
 def write_init_contents(factory_init):
-    with factory_init.open('w') as f:
-        class_def = ["from flask import Flask",
-                     "from flask_meld import Meld",
-                     "meld = Meld()",
-                     "def create_app(config_name):",
-                     "\tapp = Flask(__name__)",
-                     '\tapp.config["SECRET_KEY"] = "super_secret_test_key"',
-                     "\tmeld.init_app(app)",
-                     "\treturn app"
-                     ]
+    with factory_init.open("w") as f:
+        class_def = [
+            "from flask import Flask",
+            "from flask_meld import Meld",
+            "meld = Meld()",
+            "def create_app(config_name):",
+            "\tapp = Flask(__name__)",
+            '\tapp.config["SECRET_KEY"] = "super_secret_test_key"',
+            "\tmeld.init_app(app)",
+            "\treturn app",
+        ]
         f.writelines(f"{line}\n" for line in class_def)

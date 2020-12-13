@@ -11,9 +11,9 @@ def process_message(message):
     component = Component(meld_id)
     payload = action["payload"]
 
-    if 'syncInput' in action["type"]:
-        if hasattr(component, payload['name']):
-            setattr(component, payload['name'], payload['value'])
+    if "syncInput" in action["type"]:
+        if hasattr(component, payload["name"]):
+            setattr(component, payload["name"], payload["value"])
 
     elif "callMethod" in action["type"]:
         data = message["data"]
@@ -45,7 +45,7 @@ def process_message(message):
             if params_str == "":
                 return method_name
             else:
-                params = params_str.split(',')
+                params = params_str.split(",")
 
         if method_name is not None and hasattr(component, method_name):
             func = getattr(component, method_name)
@@ -56,9 +56,5 @@ def process_message(message):
                 func()
     rendered_component = component.render(component_name)
 
-    res = {
-        "id": meld_id,
-        "dom": rendered_component,
-        "data": component.__attributes__()
-    }
+    res = {"id": meld_id, "dom": rendered_component, "data": component.__attributes__()}
     return res
