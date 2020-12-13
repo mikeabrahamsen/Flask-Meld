@@ -31,9 +31,13 @@ def get_component_module(module_name):
     user_specified_dir = current_app.config.get("MELD_COMPONENT_DIR", None)
 
     if not user_specified_dir:
-        name = getattr(current_app, "name", None)
-        full_path = os.path.join(name, "meld", "components", module_name + ".py")
-        module = load_module_from_path(full_path, module_name)
+        try:
+            name = getattr(current_app, "name", None)
+            full_path = os.path.join(name, "meld", "components", module_name + ".py")
+            module = load_module_from_path(full_path, module_name)
+        except FileNotFoundError:
+            full_path = os.path.join("meld", "components", module_name + ".py")
+            module = load_module_from_path(full_path, module_name)
         return module
     else:
         try:
