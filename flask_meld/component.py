@@ -65,52 +65,11 @@ class Component:
         self._errors = {}
 
     def __repr__(self):
-        return (
-            f"<meld.Component {self.__class__.__name__}-vars{self.__attributes__()})>"
-        )
+        return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
 
-    def __attributes__(self):
-        """
-        Get attributes that can be called in the component.
-        """
-        non_callables = [
-            member[0] for member in inspect.getmembers(self, lambda x: not callable(x))
-        ]
-        attribute_names = list(
-            filter(
-                lambda name: Component._is_public_name(name),
-                non_callables,
-            )
-        )
-
-        attributes = {}
-
-        for attribute_name in attribute_names:
-            attributes[attribute_name] = object.__getattribute__(self, attribute_name)
-
-        return attributes
-
-    def __methods__(self):
-        """
-        Get methods that can be called in the component.
-        """
-
-        member_methods = inspect.getmembers(self, inspect.ismethod)
-        public_methods = filter(
-            lambda method: Component._is_public_name(method[0]), member_methods
-        )
-        methods = {k: v for (k, v) in public_methods}
-
-        return methods
-
-    def __context__(self):
-        """
-        Collects every thing that could be used in the template context.
-        """
-        return {
-            "attributes": self.__attributes__(),
-            "methods": self.__methods__(),
-        }
+    @property
+    def _meld_attrs(self):
+        return ["id", "render"]
 
     @property
     def _item_data(self):
@@ -120,10 +79,57 @@ class Component:
     def _item_data(self, data):
         self._data = data
 
-    def render(self, component_name):
-        return self.view(component_name, self._data)
+    def _attributes(self):
+        """
+        Get attributes that can be called in the component.
+        """
+        attributes = {}
 
-    def view(self, component_name, data):
+        attributes_names = [
+            attr
+            for attr in dir(self)
+            if not callable(getattr(self, attr))
+            and not attr.startswith("_")
+            and attr not in self._meld_attrs
+        ]
+        for name in attributes_names:
+            attributes[name] = getattr(self, name)
+
+        return attributes
+
+    def _functions(self):
+        """
+        Get methods that can be called in the component.
+        """
+
+        functions = {}
+
+        function_list = [
+            func
+            for func in dir(self)
+            if callable(getattr(self, func))
+            and not func.startswith("_")
+            and func not in self._meld_attrs
+        ]
+
+        for func in function_list:
+            functions[func] = getattr(self, func)
+
+        return functions
+
+    def __context__(self):
+        """
+        Collects every thing that could be used in the template context.
+        """
+        return {
+            "attributes": self._attributes(),
+            "methods": self._functions(),
+        }
+
+    def render(self, component_name):
+        return self._view(component_name, self._data)
+
+    def _view(self, component_name, data):
         context = self.__context__()
         context_variables = {}
         context_variables.update(context["attributes"])
@@ -144,7 +150,7 @@ class Component:
         root_element = Component._get_root_element(soup)
         root_element["meld:id"] = str(self.id)
         root_element["meld:data"] = frontend_context_variables
-        self.set_values(root_element, context_variables)
+        self._set_values(root_element, context_variables)
 
         script = soup.new_tag("script", type="module")
         init = {"id": str(self.id), "name": component_name, "data": data}
@@ -159,7 +165,7 @@ class Component:
 
         return rendered_template
 
-    def set_values(self, soup, context_variables):
+    def _set_values(self, soup, context_variables):
         for element in soup:
             try:
                 if "meld:model" in element.attrs:
@@ -168,18 +174,6 @@ class Component:
                     ]
             except Exception as e:
                 pass
-
-    @staticmethod
-    def _is_public_name(name):
-        """
-        Determines if the name should be sent in the context.
-        """
-        protected_names = (
-            "id",
-            "render",
-            "view",
-        )
-        return not (name.startswith("_") or name in protected_names)
 
     @staticmethod
     def _get_root_element(soup):
