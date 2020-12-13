@@ -62,7 +62,7 @@ class Component:
 
         self.id = id
         self._data = {}
-        self.errors = {}
+        self._errors = {}
 
     def __repr__(self):
         return (
