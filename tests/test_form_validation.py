@@ -52,3 +52,11 @@ def test_form_validate_has_errors_if_failed():
     component = FormComponent(**form_data)
     assert not component.validate()
     assert component._form.password_confirm.errors
+
+
+def test_component_has_errors_if_validation_fails():
+    form_data = {"email": "",
+                 "password": "somepass",
+                 "password_confirm": "nomatch"}
+    component = FormComponent(**form_data)
+    assert len(component._errors) == 2

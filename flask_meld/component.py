@@ -74,6 +74,7 @@ class Component:
             # flask request object to populate the form
             self._form = getattr(self, "form_class")(formdata=None)
             self._set_form_data()
+            self.validate()
 
     def __repr__(self):
         return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
@@ -92,7 +93,13 @@ class Component:
 
     def validate(self):
         if self._form:
-            return self._form.validate()
+            validate = self._form.validate()
+            if not validate:
+                for field in self._form:
+                    if field.errors:
+                        self._errors[field] = field.errors
+
+        return validate
 
     def _attributes(self):
         """
