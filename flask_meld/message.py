@@ -17,7 +17,6 @@ def process_message(message):
             setattr(component, payload["name"], payload["value"])
 
     elif "callMethod" in action["type"]:
-        data = message["data"]
         call_method_name = payload.get("name", "")
         method_name = call_method_name
 

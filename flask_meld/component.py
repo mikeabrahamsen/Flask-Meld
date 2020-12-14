@@ -64,9 +64,8 @@ class Component:
             id = uuid.uuid4()
         self.__dict__.update(**kwargs)
         self.id = id
-        self._data = self._attributes()
         self._form = None
-        self._errors = {}
+        self.errors = {}
 
         if hasattr(self, "form_class"):
             # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
@@ -74,7 +73,6 @@ class Component:
             # flask request object to populate the form
             self._form = getattr(self, "form_class")(formdata=None)
             self._set_form_data()
-            self.validate()
 
     def __repr__(self):
         return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
@@ -85,7 +83,7 @@ class Component:
 
     def _set_form_data(self, data=None):
         if not data:
-            data = self._data
+            data = self._attributes()
         form = self._form
         for field in form.data:
             if field in data:
@@ -97,7 +95,7 @@ class Component:
             if not validate:
                 for field in self._form:
                     if field.errors:
-                        self._errors[field] = field.errors
+                        self.errors[field.name] = field.errors
 
         return validate
 
@@ -149,7 +147,7 @@ class Component:
         }
 
     def render(self, component_name):
-        return self._view(component_name, self._data)
+        return self._view(component_name, self._attributes())
 
     def _view(self, component_name, data):
         context = self.__context__()

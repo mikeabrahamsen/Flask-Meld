@@ -11,7 +11,7 @@ class ExampleComponent(Component):
 
 def test_component_variables_are_valid():
     component = ExampleComponent()
-    expected_attributes = ["test_var", "test_var_2"]
+    expected_attributes = ["errors", "test_var", "test_var_2"]
     assert list(component._attributes().keys()) == expected_attributes
 
 

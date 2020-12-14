@@ -59,4 +59,4 @@ def test_component_has_errors_if_validation_fails():
                  "password": "somepass",
                  "password_confirm": "nomatch"}
     component = FormComponent(**form_data)
-    assert len(component._errors) == 2
+    assert len(component.errors) == 2
