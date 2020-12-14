@@ -59,28 +59,40 @@ def load_module_from_path(full_path, module_name):
 
 
 class Component:
-    def __init__(self, id=None, **kwargs):
+    def __init__(self, id=None, request=None, **kwargs):
         if not id:
             id = uuid.uuid4()
         self.__dict__.update(**kwargs)
         self.id = id
-        self._data = {}
+        self._data = self._attributes()
+        self._form = None
         self._errors = {}
+
+        if hasattr(self, "form_class"):
+            # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
+            # need to pass formdata=None or flask-wtf will try to use the
+            # flask request object to populate the form
+            self._form = getattr(self, "form_class")(formdata=None)
+            self._set_form_data()
 
     def __repr__(self):
         return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
 
     @property
     def _meld_attrs(self):
-        return ["id", "render"]
+        return ["id", "render", "validate"]
 
-    @property
-    def _item_data(self):
-        return self._data
+    def _set_form_data(self, data=None):
+        if not data:
+            data = self._data
+        form = self._form
+        for field in form.data:
+            if field in data:
+                setattr(form[field], "data", data[field])
 
-    @_item_data.setter
-    def _item_data(self, data):
-        self._data = data
+    def validate(self):
+        if self._form:
+            return self._form.validate()
 
     def _attributes(self):
         """
