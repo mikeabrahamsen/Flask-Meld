@@ -13,10 +13,10 @@ class Meld:
             self.init_app(app)
 
     def send_static_file(self, filename):
+        """Send a static file from the flask-meld static directory."""
         _static_dir = os.path.realpath(
             os.path.join(os.path.dirname(__file__), "static/js")
         )
-        """Send a static file from the flask-meld static directory."""
         return send_from_directory(_static_dir, filename)
 
     def init_app(self, app):
