@@ -4,13 +4,14 @@ Flask-Meld
 A way to meld your frontend and backend code
 """
 import pathlib
-import re
 from setuptools import setup
 
 with open("flask_meld/__init__.py", "r") as f:
-    version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
-    ).group(1)
+    version = [
+        line.split(" = ")[1].strip()
+        for line in f.readlines()
+        if line.startswith("__version__")
+    ][0].strip('"')
 
 HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
