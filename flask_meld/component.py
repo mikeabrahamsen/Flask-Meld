@@ -58,45 +58,86 @@ def load_module_from_path(full_path, module_name):
     return module
 
 
+CSRF_TOKEN_ATTR = "csrf_token"
+
+
 class Component:
-    def __init__(self, id=None, request=None, **kwargs):
+    def __init__(self, id=None, **kwargs):
         if not id:
             id = uuid.uuid4()
+        self.errors = {}
+        self._form = None
         self.__dict__.update(**kwargs)
         self.id = id
-        self._form = None
-        self.errors = {}
 
         if hasattr(self, "form_class"):
-            # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
-            # need to pass formdata=None or flask-wtf will try to use the
-            # flask request object to populate the form
-            self._form = getattr(self, "form_class")(formdata=None)
-            self._set_form_data()
+            self._bind_form(kwargs)
 
     def __repr__(self):
         return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
 
     @property
     def _meld_attrs(self):
-        return ["id", "render", "validate"]
+        """
+        A list of meld variables and functions that are hidden from the view
+        """
+        return ["id", "render", "validate", "updated"]
 
-    def _set_form_data(self, data=None):
-        if not data:
-            data = self._attributes()
-        form = self._form
-        for field in form.data:
-            if field in data:
-                setattr(form[field], "data", data[field])
+    def _bind_form(self, kwargs):
+        """
+        Create a form from the form_class, add meld:model to each field and
+        bind kwargs to field data
+        """
+        # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
+        # need to pass formdata=None or flask-wtf will try to use the
+        # flask request object to populate the form
+        self._form = getattr(self, "form_class")(formdata=None)
+        for field in self._form:
+            meld_attribute = {"meld:model": field.name}
+            setattr(self._form[field.name], "render_kw", meld_attribute)
+            self._bind_data_to_form(field, kwargs)
 
-    def validate(self):
-        if self._form:
+    def _set_token(self, field):
+        """
+        Gather the CSRF token from the form and apply it to the component.
+        """
+        soup = BeautifulSoup(field.__call__(), features="html.parser")
+        token = soup.find(attrs={"name": CSRF_TOKEN_ATTR}).get("value")
+        self.csrf_token = token
+
+    def _bind_data_to_form(self, field, kwargs):
+        """
+        Bind any attributes from kwargs that are form fields to the form.
+        """
+        if field.name in kwargs:
+            self._set_field_data(field.name, kwargs[field.name])
+            if field.name == CSRF_TOKEN_ATTR:
+                self._set_token(field)
+        else:
+            setattr(self, field.name, None)
+
+    def _set_field_data(self, field_name, value):
+        """
+        Set the data attribute on a form field.
+        """
+        setattr(self._form[field_name], "data", value)
+
+    def validate(self, field=None):
+        """
+        Validate a form or a field.
+        """
+        if not self._form:
+            return True
+
+        if field:
+            validate = field.validate(self._form)
+        else:
             validate = self._form.validate()
-            if not validate:
-                for field in self._form:
-                    if field.errors:
-                        self.errors[field.name] = field.errors
 
+        if not validate:
+            for field in self._form:
+                if field.errors:
+                    self.errors[field.name] = field.errors
         return validate
 
     def _attributes(self):
@@ -146,6 +187,12 @@ class Component:
             "methods": self._functions(),
         }
 
+    def updated(self, name):
+        """
+        Hook that gets called when a component's data is about to get updated.
+        """
+        pass
+
     def render(self, component_name):
         return self._view(component_name, self._attributes())
 
@@ -155,6 +202,7 @@ class Component:
         context_variables.update(context["attributes"])
         context_variables.update(context["methods"])
         context_variables.update(data)
+        context_variables.update({"form": self._form})
 
         frontend_context_variables = {}
         frontend_context_variables.update(context["attributes"])
@@ -186,13 +234,18 @@ class Component:
         return rendered_template
 
     def _set_values(self, soup, context_variables):
+        """
+        Set the value on model fields
+        """
         for element in soup:
             try:
                 if "meld:model" in element.attrs:
                     element.attrs["value"] = context_variables[
                         element.attrs["meld:model"]
                     ]
-            except Exception as e:
+            except Exception:
+                # There are cases where an element will not have attrs and does not need
+                # to be set. Simply ignore those
                 pass
 
     @staticmethod

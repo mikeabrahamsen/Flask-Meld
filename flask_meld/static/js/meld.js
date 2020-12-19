@@ -59,9 +59,7 @@ export var Meld = (function () {
 
 function updateData(component, newData){
   for (var key in newData) {
-    if (component.data[key] !== null){
-      component.data[key] = newData[key];
-    }
+    component.data[key] = newData[key];
   }
 }
 

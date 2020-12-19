@@ -11,7 +11,8 @@ More fun!
 
 # Initialize Meld in your project
 
-Example of how add Flask-Meld to a Flask application
+For the sake of example, here is a minimal Flask application to get things
+running:
 
 ```py
 from flask import Flask, render_template
@@ -34,6 +35,8 @@ if __name__ == '__main__':
 ```
 
 # Add `{% meld_scripts %}` to your base html template
+
+This sets up the application and initializes Flask-Meld.
 
 ```html
 
@@ -62,9 +65,10 @@ if __name__ == '__main__':
 
 Components are stored in `meld/components` either within your application folder or in the base directory of your project.
 
-Components are simple Python classes. No magic here.
+Components are simple Python classes.
 
-Here is an example of a Counter Component:
+The `counter` component:
+
 ```py
 # app/meld/components/counter.py
 
@@ -103,6 +107,111 @@ The buttons use `meld:click` to call the `add` or `subtract` function of the
 Counter component.
 The input uses `meld:model` to bind the input to the `count` property on the
 Counter component.
+
+# Form Validation
+
+A big part of creating web applications is using forms. Flask-Meld integrates with
+Flask-WTF to give you real-time form validation without writing any Javascript.
+
+## Use WTForms for validation
+
+Define your form with Flask-WTF just as you always do. 
+
+```py
+# forms.py
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField
+from wtforms.validators import DataRequired, Email, EqualTo
+
+
+class RegistrationForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    password_confirm = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+```
+
+## Create your template
+
+Use WTForm helpers to create your form in your HTML template. 
+
+```html
+<!-- templates/meld/register.html -->
+<div>
+    <form method="POST">
+        <div>
+            {{ form.email.label }}
+            {{ form.email }}
+            <span> {{ errors.password | first }} </span>
+        </div>
+
+        <div>
+            {{ form.password.label }}
+            {{ form.password }}
+            <span> {{ errors.password | first }} </span>
+        </div>
+        <div>
+            {{ form.password_confirm.label }}
+            {{ form.password_confirm }}
+            <span> {{ errors.password_confirm | first }} </span>
+        </div>
+        <div>
+            {{ form.submit }}
+        </div>
+    </form>
+</div>
+```
+
+Using the WTForm helpers saves you some typing. 
+Alternatively, you can define your HTML form without using the helpers. 
+For example, to make a field use
+`<input id="email" meld:model="email" name="email" required="" type="text" value="">`
+Make sure that `meld:model="name_of_field"` exists on each field.
+
+## Define the form in the component
+
+```py
+# meld/components/register.py
+from flask_meld import Component
+from forms import RegistrationForm
+
+
+class Register(Component):
+    form_class = RegistrationForm
+```
+
+## Realtime form validation
+
+To make your form validate as a user types use the `updated` function. This will provide
+the form field and allow you to validate on the fly. Simply call `validate` on the
+field.
+
+```py
+# meld/components/register.py
+from flask_meld import Component
+from forms import RegistrationForm
+
+
+class Register(Component):
+    form_class = RegistrationForm
+
+    def updated(self, field):
+        self.validate(field)
+```
+
+## Your routes can stay the same when using real-time validation
+
+You have options here, you can create a custom method on your component to handle
+submissions or you can use your regular old Flask routes. 
+
+```py
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        # do anything you need with your form data...
+        return redirect(url_for("index"))
+    return render_template("register_page.html")
+'''
 
 Pretty simple right? You can use this to create very dynamic user interfaces
 using pure Python and HTML. We would love to see what you have built using Meld
