@@ -211,7 +211,7 @@ def register():
         # do anything you need with your form data...
         return redirect(url_for("index"))
     return render_template("register_page.html")
-'''
+```
 
 Pretty simple right? You can use this to create very dynamic user interfaces
 using pure Python and HTML. We would love to see what you have built using Meld
