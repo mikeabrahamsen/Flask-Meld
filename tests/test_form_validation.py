@@ -13,7 +13,7 @@ class RegistrationForm(Form):
 
 
 class FormComponent(Component):
-    form_class = RegistrationForm
+    form = RegistrationForm()
 
 
 def test_component_has_form():

@@ -70,7 +70,7 @@ class Component:
         self.__dict__.update(**kwargs)
         self.id = id
 
-        if hasattr(self, "form_class"):
+        if hasattr(self, "form"):
             self._bind_form(kwargs)
 
     def __repr__(self):
@@ -81,7 +81,7 @@ class Component:
         """
         A list of meld variables and functions that are hidden from the view
         """
-        return ["id", "render", "validate", "updated"]
+        return ["id", "render", "validate", "updated", "form"]
 
     def _bind_form(self, kwargs):
         """
@@ -91,7 +91,7 @@ class Component:
         # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
         # need to pass formdata=None or flask-wtf will try to use the
         # flask request object to populate the form
-        self._form = getattr(self, "form_class")(formdata=None)
+        self._form = getattr(self, "form")
         for field in self._form:
             meld_attribute = {"meld:model": field.name}
             setattr(self._form[field.name], "render_kw", meld_attribute)
@@ -209,7 +209,6 @@ class Component:
         frontend_context_variables = orjson.dumps(frontend_context_variables).decode(
             "utf-8"
         )
-
         rendered_template = render_template(
             f"meld/{component_name}.html", **context_variables
         )
