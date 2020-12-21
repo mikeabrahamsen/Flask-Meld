@@ -176,7 +176,7 @@ from forms import RegistrationForm
 
 
 class Register(Component):
-    form_class = RegistrationForm
+    form = RegistrationForm()
 ```
 
 ## Realtime form validation
@@ -192,7 +192,7 @@ from forms import RegistrationForm
 
 
 class Register(Component):
-    form_class = RegistrationForm
+    form = RegistrationForm()
 
     def updated(self, field):
         self.validate(field)
