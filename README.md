@@ -20,11 +20,11 @@ from flask_meld import Meld
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'big!secret'
-socketio = app.socketio
 
 meld = Meld()
 meld.init_app(app)
 
+socketio = app.socketio
 
 @app.route('/')
 def index():
