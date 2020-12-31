@@ -236,16 +236,10 @@ class Component:
         """
         Set the value on model fields
         """
-        for element in soup:
-            try:
-                if "meld:model" in element.attrs:
-                    element.attrs["value"] = context_variables[
-                        element.attrs["meld:model"]
-                    ]
-            except Exception:
-                # There are cases where an element will not have attrs and does not need
-                # to be set. Simply ignore those
-                pass
+        for element in soup.find_all(attrs={'meld:model': True}):
+            element.attrs["value"] = context_variables[
+                element.attrs["meld:model"]
+            ]
 
     @staticmethod
     def _get_root_element(soup):
