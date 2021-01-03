@@ -1,4 +1,4 @@
-import {$, walk, hasValue, isEmpty, sendMessage, print} from "./utils.js";
+import {$, walk, hasValue, isEmpty, sendMessage, print, debounce} from "./utils.js";
 import { Element } from "./element.js";
 
 export class Component {
@@ -22,6 +22,8 @@ export class Component {
     this.modelEls = [];
     this.keyEls = [];
 
+    this.actionQueue = [];
+
     this.actionEvents = {};
     this.attachedEventTypes = [];
     this.attachedModelEvents = [];
@@ -42,7 +44,8 @@ addModelEventListener(component, el, eventType) {
       },
     };
 
-    sendMessage(component, component.root, component.id, action, component.data);
+    this.actionQueue.push(action);
+    this.queueMessage(element.model.debounceTime);
   });
 }
 
@@ -125,19 +128,29 @@ addActionEventListener(component, eventType) {
             event.stopPropagation();
           }
           var method = { type: "callMethod", payload: { name: action.name } };
+
           if (action.key) {
             if (action.key === event.key.toLowerCase()) {
-              sendMessage(component, this.root, component.id, method, component.data)
+              this.actionQueue.push(method);
             }
           } else {
-              sendMessage(component, this.root, component.id, method, component.data)
+              this.actionQueue.push(method);
           }
+
+          this.queueMessage(element.model.debounceTime);
         }
       });
     }
   });
 }
 
+queueMessage(debounceTime, callback) {
+  if (debounceTime === -1) {
+    debounce(sendMessage, 250, false)(this, callback);
+  } else {
+    debounce(sendMessage, debounceTime, false)(this, callback);
+  }
+}
 
 
 

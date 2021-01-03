@@ -2,8 +2,21 @@ export var socketio = io();
 /*
     Handles calling the message endpoint and merging the results into the document.
     */
-export function sendMessage(component, componentRoot, meldId, action, data) {
-  socketio.emit('message', {'id': meldId, 'action':action, 'componentName': component.name, 'data': data});
+export function sendMessage(component) {
+  // Prevent network call when there isn't an action
+  if (component.actionQueue.length === 0) {
+    return;
+  }
+
+  // Prevent network call when the action queue gets repeated
+  if (component.currentActionQueue === component.actionQueue) {
+    return;
+  }
+
+  component.currentActionQueue = component.actionQueue;
+  component.actionQueue = [];
+
+  socketio.emit('message', {'id': component.id, 'actionQueue': component.currentActionQueue, 'componentName': component.name, 'data': component.data});
 }
 
 /*
@@ -66,3 +79,36 @@ export function print(msg) {
   console.log(msg, ...args);
 }
 
+/**
+ * Returns a function, that, as long as it continues to be invoked, will not
+ * be triggered. The function will be called after it stops being called for
+ * N milliseconds. If `immediate` is passed, trigger the function on the
+ * leading edge, instead of the trailing.
+ * Derived from underscore.js's implementation in https://davidwalsh.name/javascript-debounce-function.
+ */
+export function debounce(func, wait, immediate) {
+  let timeout;
+
+  if (typeof immediate === "undefined") {
+    immediate = true;
+  }
+
+  return (...args) => {
+    const context = this;
+
+    const later = () => {
+      timeout = null;
+      if (!immediate) {
+        func.apply(context, args);
+      }
+    };
+
+    const callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+
+    if (callNow) {
+      func.apply(context, args);
+    }
+  };
+}
