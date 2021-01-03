@@ -81,7 +81,6 @@ function contains(str, search) {
 meld.componentInit = function (args) {
   const component = new Component(args);
   components[component.id] = component;
-
 };
 function toKebabCase(str) {
   if (!str) {
@@ -97,38 +96,6 @@ function toKebabCase(str) {
   }
 
   return match.map((x) => x.toLowerCase()).join("-");
-}
-
-/*
-    Call an action on the specified component.
-    */
-meld.call = function (componentName, methodName,args) {
-  var meldId = args.id;
-  var componentName = args.name;
-  var componentRoot = $('[meld\\:id="' + meldId + '"]');
-
-  if (!componentRoot) {
-    Error("No component found for: ", componentName);
-  }
-
-  var meldId = componentRoot.getAttribute('meld:id');
-
-  if (!meldId) {
-    Error("No id found");
-  }
-
-
-  var action = { type: "callMethod", payload: { name: methodName, params: args } };
-  var modelEls = [];
-
-  walk(componentRoot, (el) => {
-    if (el.isSameNode(componentRoot)) {
-      // Skip the component root element
-      return
-    }
-  });
-
-  sendMessage(componentName, componentRoot, meldId, action, data);
 }
 
 /*
@@ -194,41 +161,6 @@ function $(selector, scope) {
   }
 
   return scope.querySelector(selector);
-}
-
-
-/*
-    The function is executed the number of times it is called,
-    but there is a fixed wait time before each execution.
-    From https://medium.com/ghostcoder/debounce-vs-throttle-vs-queue-execution-bcde259768.
-    */
-const funcQueue = [];
-function queue(func, waitTime) {
-  let isWaiting;
-
-  const play = () => {
-    let params;
-    isWaiting = false;
-
-    if (funcQueue.length) {
-      params = funcQueue.shift();
-      executeFunc(params);
-    }
-  };
-
-  const executeFunc = (params) => {
-    isWaiting = true;
-    func(params);
-    setTimeout(play, waitTime);
-  };
-
-  return (params) => {
-    if (isWaiting) {
-      funcQueue.push(params);
-    } else {
-      executeFunc(params);
-    }
-  };
 }
 
 return meld;
