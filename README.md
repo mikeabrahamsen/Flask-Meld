@@ -1,6 +1,7 @@
 # Flask-Meld
 
-Project inspiration - [Ditch Javascript Frameworks For Pure Python Joy](https://michaelabrahamsen.com/posts/flask-meld-ditch-javascript-frameworks-for-pure-python-joy/)
+Project inspiration - [Ditch Javascript Frameworks For Pure Python Joy](https://michaelabrahamsen.com/posts/flask-meld-ditch-javascript-frameworks-for-pure-python-joy/) 
+
 Join the community on Discord - https://discord.gg/DMgSwwdahN
 
 Meld is a framework for Flask to meld your frontend and backend code. What does
