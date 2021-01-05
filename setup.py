@@ -35,7 +35,7 @@ setup(
         "beautifulsoup4>=4",
         "orjson>=3.4.6",
         "flask-socketio>=5",
-        "eventlet>=0.30.0",
+        "gevent-websocket>=0.10.1"
     ],
     tests_require=["pytest"],
     test_suite="tests",
