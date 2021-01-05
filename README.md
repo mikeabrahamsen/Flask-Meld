@@ -33,7 +33,7 @@ def index():
     return render_template("base.html")
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, debug=True)
 ```
 
 # Add `{% meld_scripts %}` to your base html template
