@@ -19,10 +19,10 @@ class Meld:
         )
         return send_from_directory(_static_dir, filename)
 
-    def init_app(self, app):
+    def init_app(self, app, **kwargs):
         app.jinja_env.add_extension(MeldTag)
         app.jinja_env.add_extension(MeldScriptsTag)
-        app.socketio = SocketIO(app)
+        app.socketio = SocketIO(app, **kwargs)
 
         meld_dir = app.config.get("MELD_COMPONENT_DIR", None)
         if meld_dir:
