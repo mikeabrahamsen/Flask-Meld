@@ -44,6 +44,24 @@ addModelEventListener(component, el, eventType) {
       },
     };
 
+    if (element.model.isDefer) {
+        let foundAction = false;
+
+        // Update the existing action with the current value
+        component.actionQueue.forEach((a) => {
+          if (a.payload.name === element.model.name) {
+            a.payload.value = element.getValue();
+            foundAction = true;
+          }
+        });
+
+        // Add the action if not already in the queue
+        if (!foundAction) {
+          component.actionQueue.push(action);
+        }
+        return;
+    }
+
     this.actionQueue.push(action);
     this.queueMessage(element.model.debounceTime);
   });
@@ -163,10 +181,8 @@ queueMessage(debounceTime, callback) {
     if (!this.root) {
       throw Error("No id found");
     }
-    var componentData = this.root.getAttribute('meld:data');
-    const parsedData = JSON.parse(componentData);
-    this.data = parsedData;
   }
+
   refreshEventListeners() {
     this.actionEvents = {};
     this.modelEls = [];
