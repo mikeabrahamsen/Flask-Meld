@@ -1,4 +1,6 @@
 from .component import get_component_class
+from flask import jsonify
+import orjson
 
 
 def process_message(message):
@@ -55,5 +57,9 @@ def process_message(message):
                     component._bind_form(component._attributes())
     rendered_component = component.render(component_name)
 
-    res = {"id": meld_id, "dom": rendered_component, "data": component._attributes()}
+    res = {
+        "id": meld_id,
+        "dom": rendered_component,
+        "data": orjson.dumps(jsonify(component._attributes()).json).decode("utf-8"),
+    }
     return res

@@ -1,9 +1,9 @@
 import uuid
 import os
-from importlib.util import module_from_spec, spec_from_file_location
-
 import orjson
-from flask import render_template, current_app, url_for
+
+from importlib.util import module_from_spec, spec_from_file_location
+from flask import render_template, current_app, url_for, jsonify
 from bs4 import BeautifulSoup
 from bs4.formatter import HTMLFormatter
 
@@ -74,7 +74,7 @@ class Component:
             self._bind_form(kwargs)
 
     def __repr__(self):
-        return f"<meld.Component {self.__class__.__name__}-vars{self._attributes()})>"
+        return f"<meld.Component {self.__class__.__name__}>"
 
     @property
     def _meld_attrs(self):
@@ -194,9 +194,10 @@ class Component:
         pass
 
     def render(self, component_name):
-        return self._view(component_name, self._attributes())
+        return self._view(component_name)
 
-    def _view(self, component_name, data):
+    def _view(self, component_name):
+        data = self._attributes()
         context = self.__context__()
         context_variables = {}
         context_variables.update(context["attributes"])
@@ -204,11 +205,6 @@ class Component:
         context_variables.update(data)
         context_variables.update({"form": self._form})
 
-        frontend_context_variables = {}
-        frontend_context_variables.update(context["attributes"])
-        frontend_context_variables = orjson.dumps(frontend_context_variables).decode(
-            "utf-8"
-        )
         rendered_template = render_template(
             f"meld/{component_name}.html", **context_variables
         )
@@ -216,16 +212,15 @@ class Component:
         soup = BeautifulSoup(rendered_template, features="html.parser")
         root_element = Component._get_root_element(soup)
         root_element["meld:id"] = str(self.id)
-        root_element["meld:data"] = frontend_context_variables
         self._set_values(root_element, context_variables)
 
         script = soup.new_tag("script", type="module")
-        init = {"id": str(self.id), "name": component_name, "data": data}
-        init = orjson.dumps(init).decode("utf-8")
+        init = {"id": str(self.id), "name": component_name, "data": jsonify(data).json}
+        init_json = orjson.dumps(init).decode("utf-8")
 
         meld_url = url_for("static", filename="meld/meld.js")
         meld_import = f'import {{Meld}} from ".{meld_url}";'
-        script.string = f"{meld_import} Meld.componentInit({init});"
+        script.string = f"{meld_import} Meld.componentInit({init_json});"
         root_element.append(script)
 
         rendered_template = Component._desoupify(soup)

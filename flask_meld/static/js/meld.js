@@ -17,49 +17,49 @@ export var Meld = (function () {
     messageUrl = _messageUrl;
 
     socketio.on('response', function(responseJson) {
-       if (!responseJson) {
-         return
-       }
+      if (!responseJson) {
+        return
+      }
 
-       if (responseJson.error) {
-         console.error(responseJson.error);
-         return
-       }
+      if (responseJson.error) {
+        console.error(responseJson.error);
+        return
+      }
 
-       updateData(components[responseJson.id], responseJson.data);
-       var dom = responseJson.dom;
+      updateData(components[responseJson.id], responseJson.data);
+      var dom = responseJson.dom;
 
-       var morphdomOptions = {
-         childrenOnly: false,
-         getNodeKey: function (node) {
-           // A node's unique identifier. Used to rearrange elements rather than
-           // creating and destroying an element that already exists.
-           if (node.attributes) {
-             var key = node.getAttribute("meld:key") || node.id;
+      var morphdomOptions = {
+        childrenOnly: false,
+        getNodeKey: function (node) {
+          // A node's unique identifier. Used to rearrange elements rather than
+          // creating and destroying an element that already exists.
+          if (node.attributes) {
+            var key = node.getAttribute("meld:key") || node.id;
 
-             if (key) {
-               return key;
-             }
-           }
-         },
-         onBeforeElUpdated: function (fromEl, toEl) {
-           // When dealing with DOM nodes, we want isEqualNode, otherwise
-           // isSameNode will ALWAYS return false.
-           if (fromEl.isEqualNode(toEl)) {
-             return false;
-           }
-         },
-       }
+            if (key) {
+              return key;
+            }
+          }
+        },
+        onBeforeElUpdated: function (fromEl, toEl) {
+          // When dealing with DOM nodes, we want isEqualNode, otherwise
+          // isSameNode will ALWAYS return false.
+          if (fromEl.isEqualNode(toEl)) {
+            return false;
+          }
+        },
+      }
       var componentRoot = $('[meld\\:id="' + responseJson.id + '"]');
       morphdom(componentRoot, dom, morphdomOptions);
       components[responseJson.id].refreshEventListeners()
-  });
-
-}
+    });
+  }
 
 function updateData(component, newData){
-  for (var key in newData) {
-    component.data[key] = newData[key];
+  data = JSON.parse(newData);
+  for (var key in data) {
+    component.data[key] = data[key];
   }
 }
 
