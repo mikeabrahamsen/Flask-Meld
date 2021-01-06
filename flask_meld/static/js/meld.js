@@ -5,7 +5,7 @@ import { contains, hasValue, isEmpty, sendMessage, socketio, print } from "./uti
 
 export var Meld = (function () {
   var meld = {};  // contains all methods exposed publicly in the meld object
-  var messageUrl = "";
+  var messageUrl = "meld-message";
   var csrfTokenHeaderName = 'X-CSRFToken';
   var data = {};
   const components = {};
@@ -16,7 +16,7 @@ export var Meld = (function () {
   meld.init = function (_messageUrl) {
     messageUrl = _messageUrl;
 
-    socketio.on('response', function(responseJson) {
+    socketio.on('meld-response', function(responseJson) {
       if (!responseJson) {
         return
       }
@@ -25,6 +25,8 @@ export var Meld = (function () {
         console.error(responseJson.error);
         return
       }
+      if (!components[responseJson.id])
+        return
 
       updateData(components[responseJson.id], responseJson.data);
       var dom = responseJson.dom;

@@ -6,11 +6,11 @@ from .message import process_message
 
 
 class Meld:
-    def __init__(self, app=None):
+    def __init__(self, app=None, socketio=None, **kwargs):
         self.app = app
 
         if app is not None:
-            self.init_app(app)
+            self.init_app(app, socketio=socketio, **kwargs)
 
     def send_static_file(self, filename):
         """Send a static file from the flask-meld static directory."""
@@ -19,10 +19,13 @@ class Meld:
         )
         return send_from_directory(_static_dir, filename)
 
-    def init_app(self, app, **kwargs):
+    def init_app(self, app, socketio=None, **kwargs):
         app.jinja_env.add_extension(MeldTag)
         app.jinja_env.add_extension(MeldScriptsTag)
-        app.socketio = SocketIO(app, **kwargs)
+        if socketio:
+            app.socketio = socketio
+        else:
+            app.socketio = SocketIO(app, **kwargs)
 
         meld_dir = app.config.get("MELD_COMPONENT_DIR", None)
         if meld_dir:
@@ -37,8 +40,8 @@ class Meld:
 
         app.add_url_rule("/static/meld/<path:filename>", None, self.send_static_file)
 
-        @app.socketio.on("message")
+        @app.socketio.on("meld-message")
         def meld_message(message):
             """meldID, action, componentName"""
             result = process_message(message)
-            app.socketio.emit("response", result)
+            app.socketio.emit("meld-response", result)

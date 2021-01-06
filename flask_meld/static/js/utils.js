@@ -16,7 +16,7 @@ export function sendMessage(component) {
   component.currentActionQueue = component.actionQueue;
   component.actionQueue = [];
 
-  socketio.emit('message', {'id': component.id, 'actionQueue': component.currentActionQueue, 'componentName': component.name, 'data': component.data});
+  socketio.emit('meld-message', {'id': component.id, 'actionQueue': component.currentActionQueue, 'componentName': component.name, 'data': component.data});
 }
 
 /*
