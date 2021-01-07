@@ -38,17 +38,9 @@ export var Meld = (function () {
           // creating and destroying an element that already exists.
           if (node.attributes) {
             var key = node.getAttribute("meld:key") || node.id;
-
             if (key) {
               return key;
             }
-          }
-        },
-        onBeforeElUpdated: function (fromEl, toEl) {
-          // When dealing with DOM nodes, we want isEqualNode, otherwise
-          // isSameNode will ALWAYS return false.
-          if (fromEl.isEqualNode(toEl)) {
-            return false;
           }
         },
       }

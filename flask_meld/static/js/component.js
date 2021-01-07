@@ -98,9 +98,6 @@ addActionEventListener(component, eventType) {
         const { element } = actionEvent;
 
         if (targetElement.isSame(element)) {
-          // Add the value of any child element of the target that is a lazy model to the action queue
-          // Handles situations similar to https://github.com/livewire/livewire/issues/528
-
           if (action.isPrevent) {
             event.preventDefault();
           }
@@ -114,12 +111,12 @@ addActionEventListener(component, eventType) {
           if (action.key) {
             if (action.key === event.key.toLowerCase()) {
               this.actionQueue.push(method);
+              this.queueMessage(element.model.debounceTime);
             }
           } else {
               this.actionQueue.push(method);
+              this.queueMessage(element.model.debounceTime);
           }
-          this.queueMessage(element.model.debounceTime);
-
         }
       });
     }
