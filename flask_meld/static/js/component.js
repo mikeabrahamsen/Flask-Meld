@@ -32,6 +32,30 @@ export class Component {
     this.refreshEventListeners();
   }
 
+checkComponentDefer(element, action){
+    if (element.model.isDefer) {
+        let foundAction = false;
+
+        // Update the existing action with the current value
+        this.actionQueue.forEach((a) => {
+          if (a.payload.name === element.model.name) {
+            a.payload.value = element.getValue();
+            foundAction = true;
+          }
+        });
+
+        // Add the action if not already in the queue
+        if (!foundAction) {
+          this.actionQueue.push(action);
+        }
+        return;
+    }
+  else{
+    this.actionQueue.push(action);
+    this.queueMessage(element.model.debounceTime);
+  }
+}
+
 addModelEventListener(component, el, eventType) {
   el.addEventListener(eventType, (event) => {
     const element = new Element(event.target);
@@ -44,26 +68,7 @@ addModelEventListener(component, el, eventType) {
       },
     };
 
-    if (element.model.isDefer) {
-        let foundAction = false;
-
-        // Update the existing action with the current value
-        component.actionQueue.forEach((a) => {
-          if (a.payload.name === element.model.name) {
-            a.payload.value = element.getValue();
-            foundAction = true;
-          }
-        });
-
-        // Add the action if not already in the queue
-        if (!foundAction) {
-          component.actionQueue.push(action);
-        }
-        return;
-    }
-
-    this.actionQueue.push(action);
-    this.queueMessage(element.model.debounceTime);
+    this.checkComponentDefer(element, action);
   });
 }
 
@@ -96,48 +101,6 @@ addActionEventListener(component, eventType) {
           // Add the value of any child element of the target that is a lazy model to the action queue
           // Handles situations similar to https://github.com/livewire/livewire/issues/528
 
-          component.walker(element.el, (childEl) => {
-            const modelElsInTargetScope = component.modelEls.filter((e) =>
-              e.el.isSameNode(childEl)
-            );
-
-            modelElsInTargetScope.forEach((modelElement) => {
-              if (hasValue(modelElement.model) && modelElement.model.isLazy) {
-                const actionForQueue = {
-                  type: "syncInput",
-                  payload: {
-                    name: modelElement.model.name,
-                    value: modelElement.getValue(),
-                  },
-                };
-                component.actionQueue.push(actionForQueue);
-              }
-            });
-
-            const dbElsInTargetScope = component.dbEls.filter((e) =>
-              e.el.isSameNode(childEl)
-            );
-
-            dbElsInTargetScope.forEach((dbElement) => {
-              if (hasValue(dbElement.model) && dbElement.model.isLazy) {
-                const actionForQueue = {
-                  type: "dbInput",
-                  payload: {
-                    model: dbElement.model.name,
-                    db: dbElement.db.name,
-                    pk: dbElement.db.pk,
-                    fields: {},
-                  },
-                };
-                actionForQueue.payload.fields[
-                  dbElement.field.name
-                ] = dbElement.getValue();
-
-                component.actionQueue.push(actionForQueue);
-              }
-            });
-          });
-
           if (action.isPrevent) {
             event.preventDefault();
           }
@@ -147,6 +110,7 @@ addActionEventListener(component, eventType) {
           }
           var method = { type: "callMethod", payload: { name: action.name } };
 
+
           if (action.key) {
             if (action.key === event.key.toLowerCase()) {
               this.actionQueue.push(method);
@@ -154,8 +118,8 @@ addActionEventListener(component, eventType) {
           } else {
               this.actionQueue.push(method);
           }
-
           this.queueMessage(element.model.debounceTime);
+
         }
       });
     }

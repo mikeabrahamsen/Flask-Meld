@@ -15,7 +15,7 @@ def process_message(message):
     component = Component(meld_id, **data)
 
     for action in action_queue:
-        payload = action["payload"]
+        payload = action.get("payload", None)
         if "syncInput" in action["type"]:
             if hasattr(component, payload["name"]):
                 setattr(component, payload["name"], payload["value"])

@@ -205,7 +205,6 @@ class Component:
         context_variables = {}
         context_variables.update(context["attributes"])
         context_variables.update(context["methods"])
-        context_variables.update(data)
         context_variables.update({"form": self._form})
 
         rendered_template = self._render_template(
