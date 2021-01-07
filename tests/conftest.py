@@ -16,7 +16,7 @@ def init_app(app_dir):
 @pytest.fixture(scope="module")
 def app(tmpdir_factory):
     # create directory structure of project/meld/components
-    app_dir = tmpdir_factory.mktemp("project", numbered=False)
+    app_dir = tmpdir_factory.mktemp("project")
     meld = Meld()
     app = Flask(f"{app_dir}")
     create_test_component(app_dir)

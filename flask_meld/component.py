@@ -1,11 +1,11 @@
-import uuid
 import os
-import orjson
-
+import uuid
 from importlib.util import module_from_spec, spec_from_file_location
-from flask import render_template, current_app, url_for, jsonify
+
+import orjson
 from bs4 import BeautifulSoup
 from bs4.formatter import HTMLFormatter
+from flask import render_template, current_app, url_for, jsonify
 
 
 def convert_to_snake_case(s):
@@ -196,6 +196,9 @@ class Component:
     def render(self, component_name):
         return self._view(component_name)
 
+    def _render_template(self, template_name: str, context_variables: dict):
+        return render_template(template_name, **context_variables)
+
     def _view(self, component_name):
         data = self._attributes()
         context = self.__context__()
@@ -205,8 +208,8 @@ class Component:
         context_variables.update(data)
         context_variables.update({"form": self._form})
 
-        rendered_template = render_template(
-            f"meld/{component_name}.html", **context_variables
+        rendered_template = self._render_template(
+            f"meld/{component_name}.html", context_variables
         )
 
         soup = BeautifulSoup(rendered_template, features="html.parser")
@@ -231,10 +234,17 @@ class Component:
         """
         Set the value on model fields
         """
-        for element in soup.find_all(attrs={'meld:model': True}):
-            element.attrs["value"] = context_variables[
-                element.attrs["meld:model"]
+        for element in soup.select("input,select,textarea"):
+            model_attrs = [
+                attr for attr in element.attrs.keys() if attr.startswith("meld:model")
             ]
+            if len(model_attrs) > 1:
+                raise Exception(
+                    "Multiple 'meld:model' attributes not allowed on one tag."
+                )
+
+            for model_attr in model_attrs:
+                element.attrs["value"] = context_variables[element.attrs[model_attr]]
 
     @staticmethod
     def _get_root_element(soup):

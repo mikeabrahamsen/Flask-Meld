@@ -1,3 +1,6 @@
+from bs4 import BeautifulSoup
+from jinja2 import Template
+
 from flask_meld.component import Component
 
 
@@ -19,3 +22,57 @@ def test_component_methods_are_valid():
     component = ExampleComponent()
     expected_methods = ["test_method"]
     assert list(component._functions().keys()) == expected_methods
+
+
+class DirectTemplateComponent(Component):
+    text = ""
+    texts = []
+
+    def __init__(self, template_string: str, **kwargs):
+        super().__init__(**kwargs)
+        self._template = Template(template_string)
+
+    def _render_template(self, template_name: str, context_variables: dict):
+        return self._template.render(context_variables)
+
+
+def test_render_model_value(app):
+    # GIVEN
+    template = """
+    <div class="row">
+        <input type="text" meld:model="text">
+        <button class="btn right" meld:click="add">+</button>
+    </div>
+    """
+    component = DirectTemplateComponent(template)
+
+    # When
+    app.config["SERVER_NAME"] = "localhost"
+    with app.app_context():
+        component.text = "hello"
+        rendered_html = component.render("DirectTemplateComponent")
+
+    # Then
+    soup = BeautifulSoup(rendered_html, features="html.parser")
+    assert soup.find("input").attrs["value"] == "hello"
+
+
+def test_render_model_defer_value(app):
+    # GIVEN
+    template = """
+    <div class="row">
+        <input type="text" meld:model.defer="text">
+        <button class="btn right" meld:click="add">+</button>
+    </div>
+    """
+    component = DirectTemplateComponent(template)
+
+    # When
+    app.config["SERVER_NAME"] = "localhost"
+    with app.app_context():
+        component.text = "hello"
+        rendered_html = component.render("DirectTemplateComponent")
+
+    # Then
+    soup = BeautifulSoup(rendered_html, features="html.parser")
+    assert soup.find("input").attrs["value"] == "hello"
