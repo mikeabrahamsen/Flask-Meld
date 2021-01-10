@@ -86,7 +86,7 @@ export function print(msg) {
  * leading edge, instead of the trailing.
  * Derived from underscore.js's implementation in https://davidwalsh.name/javascript-debounce-function.
  */
-export function debounce(func, wait, immediate) {
+export function debounce(func, wait, component, immediate) {
   let timeout;
 
   if (typeof immediate === "undefined") {
@@ -99,7 +99,13 @@ export function debounce(func, wait, immediate) {
     const later = () => {
       timeout = null;
       if (!immediate) {
-        func.apply(context, args);
+        if (component.activeDebouncers === 1){
+          component.activeDebouncers = 0;
+          func.apply(context, args);
+        }
+        else{
+          component.activeDebouncers -= 1;
+        }
       }
     };
 

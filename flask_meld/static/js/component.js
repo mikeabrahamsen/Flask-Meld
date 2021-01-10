@@ -23,6 +23,7 @@ export class Component {
     this.keyEls = [];
 
     this.actionQueue = [];
+    this.activeDebouncers = 0
 
     this.actionEvents = {};
     this.attachedEventTypes = [];
@@ -52,7 +53,7 @@ checkComponentDefer(element, action){
     }
   else{
     this.actionQueue.push(action);
-    this.queueMessage(element.model.debounceTime);
+    this.queueMessage(element.model);
   }
 }
 
@@ -111,11 +112,11 @@ addActionEventListener(component, eventType) {
           if (action.key) {
             if (action.key === event.key.toLowerCase()) {
               this.actionQueue.push(method);
-              this.queueMessage(element.model.debounceTime);
+              this.queueMessage(element.model);
             }
           } else {
               this.actionQueue.push(method);
-              this.queueMessage(element.model.debounceTime);
+              this.queueMessage(element.model);
           }
         }
       });
@@ -123,11 +124,12 @@ addActionEventListener(component, eventType) {
   });
 }
 
-queueMessage(debounceTime, callback) {
-  if (debounceTime === -1) {
-    debounce(sendMessage, 250, false)(this, callback);
+queueMessage(model, callback) {
+  this.activeDebouncers += 1
+  if (model.debounceTime === -1) {
+    debounce(sendMessage, 150, this, false)(this, callback);
   } else {
-    debounce(sendMessage, debounceTime, false)(this, callback);
+    debounce(sendMessage, model.debounceTime, this, false)(this, callback);
   }
 }
 
