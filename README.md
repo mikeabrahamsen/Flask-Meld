@@ -110,6 +110,37 @@ Counter component.
 The input uses `meld:model` to bind the input to the `count` property on the
 Counter component.
 
+### Modifiers
+
+Use modifiers to change how Meld handles network requests.
+
+`debounce`: `<input meld:model.debounce-500="search">` Delay network requests for an 
+amount of time after a keypress.  Used to increase performance and sync when 
+the user has paused typing for an amount of time. `debounce-250` will wait 250ms before
+it syncs with the server. The default is 150ms.
+
+`defer`: `<input meld:model.defer="search">` Pass the `search` field with the next network
+request. Used to improve performance when realtime databinding is not necessary.
+
+`prevent`: Use to prevent a default action. 
+The following example uses `defer` to delay sending a network request until the form is
+submitted. Idea of how this can be used: instead of adding a keydown event listener to the input field to capture 
+the press of the `enter` key, a form with `meld:submit.prevent="search"` can be used to 
+to invoke a component's `search` function instead of the default form handler on form
+submission.
+
+```html
+<form meld:submit.prevent="search">
+    <input meld:model.defer="search_text" type="text" name="name" id="name" placeholder="Search for name">
+    <button meld:click="search">Search</button>
+
+    <!-- To get the same functionality without using meld:submit.prevent="search" you
+    would need to add an event listener for the enter key 
+    <input meld:model.defer="search_text" meld:keydown.Enter="search" type="text" name="name" id="name" placeholder="Search for name">
+    -->
+</form>
+```
+
 # Form Validation
 
 A big part of creating web applications is using forms. Flask-Meld integrates with
