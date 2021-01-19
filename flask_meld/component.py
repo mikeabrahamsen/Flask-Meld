@@ -5,7 +5,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import orjson
 from bs4 import BeautifulSoup
 from bs4.formatter import HTMLFormatter
-from flask import render_template, current_app, url_for, jsonify
+from flask import render_template, current_app, jsonify
 
 
 def convert_to_snake_case(s):
@@ -220,8 +220,7 @@ class Component:
         init = {"id": str(self.id), "name": component_name, "data": jsonify(data).json}
         init_json = orjson.dumps(init).decode("utf-8")
 
-        meld_url = url_for("static", filename="meld/meld.js")
-        meld_import = f'import {{Meld}} from ".{meld_url}";'
+        meld_import = 'import {Meld} from "/static/meld/meld.js";'
         script.string = f"{meld_import} Meld.componentInit({init_json});"
         root_element.append(script)
 

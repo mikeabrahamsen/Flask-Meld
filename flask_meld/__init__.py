@@ -1,4 +1,4 @@
 from .meld import Meld
 from .component import Component
 
-__version__ = "0.4.4"
+__version__ = "0.4.5"

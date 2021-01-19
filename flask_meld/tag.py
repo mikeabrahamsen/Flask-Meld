@@ -44,11 +44,11 @@ class MeldScriptsTag(Extension):
         msg_url = "message"
         scripts = ""
         for f in files:
-            url = url_for("static", filename=f"meld/{f}")
+            url = f"/static/meld/{f}"
             scripts += f'<script src="{url}"></script>'
 
-        meld_url = url_for("static", filename="meld/meld.js")
-        meld_import = f'import {{Meld}} from ".{meld_url}";'
+        meld_url = "/static/meld/meld.js"
+        meld_import = f'import {{Meld}} from "{meld_url}";'
         scripts += f'<script type="module" src="{meld_url}"></script>'
         scripts += (
             '<script type="module">'
