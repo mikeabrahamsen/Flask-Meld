@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+import pkg_resources
 from flask import send_from_directory, _app_ctx_stack, url_for
 from flask_socketio import SocketIO
 from .tag import MeldTag, MeldScriptsTag
@@ -14,10 +16,8 @@ class Meld:
 
     def send_static_file(self, filename):
         """Send a static file from the flask-meld js directory."""
-        _static_dir = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), "meld_js_src")
-        )
-        return send_from_directory(_static_dir, filename)
+        directory = Path(pkg_resources.resource_filename('flask_meld', 'meld_js_src'))
+        return send_from_directory(directory, filename)
 
     def init_app(self, app, socketio=None, **kwargs):
         app.jinja_env.add_extension(MeldTag)
