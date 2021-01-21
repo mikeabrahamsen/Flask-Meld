@@ -1,5 +1,5 @@
 import os
-from flask import send_from_directory
+from flask import send_from_directory, _app_ctx_stack, url_for
 from flask_socketio import SocketIO
 from .tag import MeldTag, MeldScriptsTag
 from .message import process_message
@@ -13,9 +13,9 @@ class Meld:
             self.init_app(app, socketio=socketio, **kwargs)
 
     def send_static_file(self, filename):
-        """Send a static file from the flask-meld static directory."""
+        """Send a static file from the flask-meld js directory."""
         _static_dir = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), "static/js")
+            os.path.join(os.path.dirname(__file__), "meld_js_src")
         )
         return send_from_directory(_static_dir, filename)
 
@@ -38,7 +38,9 @@ class Meld:
                 "The Flask-Meld requires the 'SECRET_KEY' config " "variable to be set"
             )
 
-        app.add_url_rule("/static/meld/<path:filename>", None, self.send_static_file)
+        @app.route("/meld_js_src/<path:filename>")
+        def meld_static_file(filename):
+            return self.send_static_file(filename)
 
         @app.socketio.on("meld-message")
         def meld_message(message):

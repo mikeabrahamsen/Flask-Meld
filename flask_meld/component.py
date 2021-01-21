@@ -220,7 +220,7 @@ class Component:
         init = {"id": str(self.id), "name": component_name, "data": jsonify(data).json}
         init_json = orjson.dumps(init).decode("utf-8")
 
-        meld_import = 'import {Meld} from "/static/meld/meld.js";'
+        meld_import = 'import {Meld} from "/meld_js_src/meld.js";'
         script.string = f"{meld_import} Meld.componentInit({init_json});"
         root_element.append(script)
 

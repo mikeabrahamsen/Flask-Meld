@@ -42,12 +42,13 @@ class MeldScriptsTag(Extension):
     def _render(self):
         files = ["morphdom-umd.js", "socket.io.js"]
         msg_url = "message"
+        base_js_url = "/meld_js_src"
         scripts = ""
         for f in files:
-            url = f"/static/meld/{f}"
+            url = f"{base_js_url}/{f}"
             scripts += f'<script src="{url}"></script>'
 
-        meld_url = "/static/meld/meld.js"
+        meld_url = f"{base_js_url}/meld.js"
         meld_import = f'import {{Meld}} from "{meld_url}";'
         scripts += f'<script type="module" src="{meld_url}"></script>'
         scripts += (
