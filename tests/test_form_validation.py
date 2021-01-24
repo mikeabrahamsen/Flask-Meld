@@ -10,6 +10,7 @@ class RegistrationForm(Form):
     password_confirm = PasswordField(
         ("Confirm Password"), validators=[DataRequired(), EqualTo("password")]
     )
+    submit = SubmitField("Submit")
 
 
 class FormComponent(Component):
@@ -77,3 +78,8 @@ def test_form_validates():
     form = component._form
     setattr(form["email"], "data", "help")
     assert getattr(component, "email") is None
+
+
+def test_form_submit_model_is_not_set():
+    component = FormComponent()
+    assert "meld:model" not in component._form.submit.__call__()

@@ -88,14 +88,12 @@ class Component:
         Create a form from the form_class, add meld:model to each field and
         bind kwargs to field data
         """
-        # tricky: https://flask-wtf.readthedocs.io/en/stable/api.html
-        # need to pass formdata=None or flask-wtf will try to use the
-        # flask request object to populate the form
         self._form = getattr(self, "form")
         for field in self._form:
-            meld_attribute = {"meld:model": field.name}
-            setattr(self._form[field.name], "render_kw", meld_attribute)
-            self._bind_data_to_form(field, kwargs)
+            if not field.type == "SubmitField":
+                meld_attribute = {"meld:model": field.name}
+                setattr(self._form[field.name], "render_kw", meld_attribute)
+                self._bind_data_to_form(field, kwargs)
 
     def _set_token(self, field):
         """
