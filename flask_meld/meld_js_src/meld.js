@@ -27,6 +27,9 @@ export var Meld = (function () {
       }
       if (!components[responseJson.id])
         return
+      else if(components[responseJson.id].actionQueue.length > 0)
+        return
+
 
       updateData(components[responseJson.id], responseJson.data);
       var dom = responseJson.dom;
