@@ -1,6 +1,7 @@
 # Flask-Meld
 
-Official Website - [Flask-Meld.dev](https://www.flask-meld.dev) 
+Official Website - [Flask-Meld.dev](https://www.flask-meld.dev)
+
 Project inspiration - [Ditch Javascript Frameworks For Pure Python Joy](https://michaelabrahamsen.com/posts/flask-meld-ditch-javascript-frameworks-for-pure-python-joy/) 
 
 Join the community on Discord - https://discord.gg/DMgSwwdahN
