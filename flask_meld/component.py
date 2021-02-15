@@ -19,6 +19,9 @@ def convert_to_camel_case(s):
 
 
 def get_component_class(component_name):
+    """
+    Get a component class based on a component name.
+    """
     module_name = convert_to_snake_case(component_name)
     class_name = convert_to_camel_case(module_name)
     module = get_component_module(module_name)
@@ -28,6 +31,10 @@ def get_component_class(component_name):
 
 
 def get_component_module(module_name):
+    """
+    Get the module from the meld/components directory or from a
+    custom location using the config with `MELD_COMPONENT_DIR`.
+    """
     user_specified_dir = current_app.config.get("MELD_COMPONENT_DIR", None)
 
     if not user_specified_dir:
@@ -52,6 +59,9 @@ def get_component_module(module_name):
 
 
 def load_module_from_path(full_path, module_name):
+    """
+    Load a module given from a given path based on the name of the module
+    """
     spec = spec_from_file_location(module_name, full_path)
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -62,6 +72,10 @@ CSRF_TOKEN_ATTR = "csrf_token"
 
 
 class Component:
+    """
+    The meld Component class does most of the heavy lifting to handle data-binding,
+    template context variable binding, template rendering and additional hooks.
+    """
     def __init__(self, id=None, **kwargs):
         if not id:
             id = uuid.uuid4()
@@ -86,7 +100,7 @@ class Component:
     def _bind_form(self, kwargs):
         """
         Create a form from the form_class, add meld:model to each field and
-        bind kwargs to field data
+        bind kwargs to field data.
         """
         self._form = getattr(self, "form")
         for field in self._form:
@@ -191,13 +205,13 @@ class Component:
         """
         pass
 
-    def render(self, component_name):
+    def render(self, component_name: str):
         return self._view(component_name)
 
     def _render_template(self, template_name: str, context_variables: dict):
         return render_template(template_name, **context_variables)
 
-    def _view(self, component_name):
+    def _view(self, component_name: str):
         data = self._attributes()
         context = self.__context__()
         context_variables = {}
